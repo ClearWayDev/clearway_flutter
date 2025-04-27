@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "388109844124",
+    "project_id": "clearway-sxxx",
+    "storage_bucket": "clearway-sxxx.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:388109844124:android:0bbb465d3baa9bfe93b759",
+        "android_client_info": {
+          "package_name": "dev.clearway"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "388109844124-va2r0be0qf6kf0rftehjv23uh9dsq6bi.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNuMiw0aEt9eLSUHxy-EvetPUsg7BKzrA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "388109844124-va2r0be0qf6kf0rftehjv23uh9dsq6bi.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

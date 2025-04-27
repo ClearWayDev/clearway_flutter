@@ -1,4 +1,4 @@
-package com.example.clearway_flutter
+package dev.clearway
 
 import io.flutter.embedding.android.FlutterActivity
 
