@@ -4,9 +4,13 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../providers/appInfo_state.dart';
 
 class WebSocketService {
-  late IO.Socket socket;
+  late IO.Socket socket =
+      socket = IO.io("http://localhost", <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': true,
+      });
 
-  void connect() {
+  WebSocketService() {
     final container = ProviderContainer();
     final appInfo = container.read(appInfoProvider);
     socket = IO.io(appInfo!.backendUrl, <String, dynamic>{
