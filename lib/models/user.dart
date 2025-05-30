@@ -1,16 +1,50 @@
-// user_model.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class User {
-  final String id;
-  final String name;
+  final String uid;
   final String email;
+  final UserType accountType;
 
-  User({required this.id, required this.name, required this.email});
+  User({required this.uid, required this.email, required this.accountType});
 
-  User copyWith({String? id, String? name, String? email}) {
+  // Convert a User object to a Map for Firestore
+  Map<String, dynamic> toMap() {
+    return {
+      'uid': uid,
+      'email': email,
+      'accountType': accountType.toString().split('.').last, // Store as string
+    };
+  }
+
+  // Create a User object from a Firestore DocumentSnapshot
+  factory User.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data()!;
     return User(
-      id: id ?? this.id,
-      name: name ?? this.name,
+      uid: data['uid'] ?? '',
+      email: data['email'] ?? '',
+      accountType: _accountTypeFromString(data['accountType']),
+    );
+  }
+
+  // Convert the string back to UserType
+  static UserType _accountTypeFromString(String accountTypeStr) {
+    switch (accountTypeStr) {
+      case 'blind':
+        return UserType.blind;
+      case 'volunteer':
+        return UserType.volunteer;
+      default:
+        throw ArgumentError('Unknown accountType: $accountTypeStr');
+    }
+  }
+
+  User copyWith({String? uid, String? email, UserType? accountType}) {
+    return User(
+      uid: uid ?? this.uid,
       email: email ?? this.email,
+      accountType: accountType ?? this.accountType,
     );
   }
 }
+
+enum UserType { blind, volunteer }

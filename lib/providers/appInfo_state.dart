@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/appInfo.dart';
 
 class AppInfoState extends StateNotifier<AppInfo?> {
-  AppInfoState() : super(AppInfo(backendUrl: 'http://localhost:3000'));
+  AppInfoState() : super(AppInfo(backendUrl: 'http://localhost:6699'));
 
-  void setInfo(AppInfo appInfo) => state = appInfo;
+  void setInfo(AppInfo appInfo) {
+    state = appInfo;
+  }
 
   void updateURL(String url) {
     state = state!.copyWith(backendUrl: url);

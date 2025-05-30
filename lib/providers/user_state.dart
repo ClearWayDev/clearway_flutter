@@ -3,13 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 
 class UserState extends StateNotifier<User?> {
-  UserState() : super(null); // null means no user logged in
+  UserState()
+    : super(
+        User(accountType: UserType.blind, email: "sfdf", uid: "fdfdfd"),
+      ); // null means no user logged in
 
   void setUser(User user) => state = user;
 
-  void updateName(String newName) {
+  void updateUID(String newUID) {
     if (state != null) {
-      state = state!.copyWith(name: newName);
+      state = state!.copyWith(uid: newUID);
     }
   }
 
