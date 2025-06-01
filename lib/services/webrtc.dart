@@ -37,9 +37,12 @@ class WebRTCService {
       'iceServers': [
         {'urls': 'stun:stun.l.google.com:19302'},
       ],
+      'sdpSemantics': 'unified-plan',
     });
 
-    _peerConnection.addStream(_localStream);
+    for (var track in _localStream.getTracks()) {
+      _peerConnection.addTrack(track, _localStream);
+    }
 
     _peerConnection.onIceCandidate = (candidate) {
       print('Sending ICE Candidate: ${candidate.candidate}');
@@ -119,11 +122,11 @@ class WebRTCService {
   }
 
   // Dispose the resources
-  void dispose() {
+  void disconnect() async {
+    await _localStream.dispose();
+    await _peerConnection.close();
     _localRenderer.dispose();
     _remoteRenderer.dispose();
-    _localStream.dispose();
-    _peerConnection.close();
   }
 
   // Getters for the renderers

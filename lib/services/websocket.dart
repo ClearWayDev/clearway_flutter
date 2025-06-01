@@ -23,7 +23,7 @@ class WebSocketService {
     container.listen(appInfoProvider, (previous, next) {
       print("AppInfo changed: $next");
       if (next != previous) {
-        this.disconnect();
+        disconnect();
         initService();
       }
     });

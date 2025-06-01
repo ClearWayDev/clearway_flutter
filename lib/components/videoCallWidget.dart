@@ -30,7 +30,7 @@ class _VideoCallWidgetState extends State<VideoCallWidget> {
 
   @override
   void dispose() {
-    _webrtcService.dispose();
+    _webrtcService.disconnect();
     super.dispose();
   }
 
