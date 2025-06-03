@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../models/user.dart' as localUser; // Your User class file
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -47,6 +46,14 @@ class FirestoreService {
       await _db.collection('callrequests').doc(uid).set({'req': true});
     } catch (e) {
       debugPrint("Error adding empty call request: $e");
+    }
+  }
+
+  Future<void> removeCallRequest(String uid) async {
+    try {
+      await _db.collection('callrequests').doc(uid).delete();
+    } catch (e) {
+      debugPrint("Error removing call request: $e");
     }
   }
 
