@@ -7,77 +7,57 @@ class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<localUser.User?> getUserByUid(String uid) async {
-    try {
-      DocumentSnapshot<Map<String, dynamic>> docSnapshot =
-          await _db.collection('users').doc(uid).get();
-      if (docSnapshot.exists) {
-        return localUser.User.fromFirestore(
-          docSnapshot,
-        ); // Assumes your `User.fromFirestore` method
-      } else {
-        return null; // User not found
-      }
-    } catch (e) {
-      debugPrint("Error getting user by UID: $e");
-      return null;
-    }
-  }
-
-  Future<localUser.User?> getUserByEmail(String email) async {
-    try {
-      QuerySnapshot<Map<String, dynamic>> querySnapshot =
-          await _db
-              .collection('users')
-              .where('email', isEqualTo: email)
-              .limit(1) // Ensure we only get one document
-              .get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        DocumentSnapshot<Map<String, dynamic>> docSnapshot =
-            querySnapshot.docs.first;
-        return localUser.User.fromFirestore(docSnapshot);
-      } else {
-        return null; // User not found
-      }
-    } catch (e) {
-      debugPrint("Error getting user by email: $e");
-      return null;
-    }
-  }
-
-  Future<void> saveUser(localUser.User user) async {
-    try {
-      await _db
-          .collection('users')
-          .doc(user.uid)
-          .set(user.toMap(), SetOptions(merge: true));
-      debugPrint('User saved/updated successfully');
-    } catch (e) {
-      debugPrint("Error saving/updating user: $e");
-    }
-  }
-
-  Future<void> deleteUser(String uid) async {
-    try {
-      await _db.collection('users').doc(uid).delete();
-      debugPrint('User deleted successfully');
-    } catch (e) {
-      debugPrint("Error deleting user: $e");
-    }
-  }
-
-  Future<localUser.User?> getCurrentUser() async {
+  Future<String?> getCurrentUserID() async {
     try {
       User? firebaseUser = _auth.currentUser;
       if (firebaseUser != null) {
-        return await getUserByUid(firebaseUser.uid);
+        return _auth.currentUser!.uid;
       } else {
         return null; // No user signed in
       }
     } catch (e) {
       debugPrint("Error getting current user: $e");
       return null;
+    }
+  }
+
+  Future<String?> getFcmTokenByUid(String uid) async {
+    try {
+      DocumentSnapshot doc = await _db.collection('fcmtokens').doc(uid).get();
+      if (doc.exists) {
+        return doc['fcmToken'] as String?;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> addFcmToken(String uid, String fcmToken) async {
+    try {
+      await _db.collection('fcmtokens').doc(uid).set({
+        'fcmToken': fcmToken,
+      }, SetOptions(merge: true));
+    } catch (e) {}
+  }
+
+  Future<void> addCallRequest(String uid) async {
+    try {
+      await _db.collection('callrequests').doc(uid).set({'req': true});
+    } catch (e) {
+      debugPrint("Error adding empty call request: $e");
+    }
+  }
+
+  Future<bool> doesCallRequestExist(String uid) async {
+    try {
+      DocumentSnapshot doc =
+          await _db.collection('callrequests').doc(uid).get();
+      return doc.exists;
+    } catch (e) {
+      debugPrint("Error checking call request existence: $e");
+      return false;
     }
   }
 }
