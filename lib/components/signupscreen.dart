@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:clearway/widgets/inputfield.dart';
+import 'package:clearway/widgets/policypopup.dart';
 
 enum UserType { blind, volunteer }
 
@@ -45,7 +47,7 @@ class _SignupFlowScreenState extends State<SignupFlowScreen> {
   }
   
   Future<void> _register() async {
-  if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
   _nextStep();
 }
 
@@ -241,7 +243,7 @@ Widget _buildSignupFormStep() => Padding(
             const SizedBox(height: 40),
 
             // Username Field
-            _styledInputField(
+            styledInputField(
               label: 'Username',
               controller: _nameController,
               validator: (value) =>
@@ -250,7 +252,7 @@ Widget _buildSignupFormStep() => Padding(
             const SizedBox(height: 16),
 
             // Email Field
-            _styledInputField(
+            styledInputField(
               label: 'Email',
               controller: _emailController,
               validator: (value) => value != null && value.contains('@')
@@ -260,7 +262,7 @@ Widget _buildSignupFormStep() => Padding(
             const SizedBox(height: 16),
 
             // Password Field
-            _styledInputField(
+            styledInputField(
               label: 'Password',
               controller: _passwordController,
               obscure: _obscurePassword,
@@ -288,7 +290,7 @@ Widget _buildSignupFormStep() => Padding(
             const SizedBox(height: 16),
 
             // Confirm Password Field
-            _styledInputField(
+            styledInputField(
               label: 'Confirm password',
               controller: _confirmController,
               obscure: _obscureCPassword,
@@ -370,107 +372,294 @@ Widget _buildSignupFormStep() => Padding(
     );
 
 
-  Widget _buildPrivacyStep() => Padding(
-        padding: const EdgeInsets.all(24),
+  Widget _buildPrivacyStep() => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           children: [
-            const SizedBox(height: 40),
-            const Text(
-              'Privacy & Terms',
-              style: TextStyle(
-                fontFamily: 'Urbanist',
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
+            const SizedBox(height: 16),
+
+            // Back Button (top-left)
+            Align(
+              alignment: Alignment.topLeft,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _previousStep,
               ),
             ),
+
+            const SizedBox(height: 8),
+
+            // Title
+            Text(
+              'Privacy & Terms',
+              style: GoogleFonts.urbanist(
+                fontSize: 30,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+                letterSpacing: -0.01,
+                color: const Color(0xFF1E232C),
+                shadows: const [
+                  Shadow(
+                    offset: Offset(0, 2),
+                    blurRadius: 4,
+                    color: Color(0x40000000),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Intro text
+            const Text(
+              'To use ClearWay, you agree to the following,',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w400,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Image.asset(
+                  'assets/icon/camera-icon.png',
+                  width: 40,
+                  height: 40,
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'ClearWay can record, review, and share videos and images for safety, quality, and as further described in the Privacy Policy.',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 13,
+                      height: 1.5,
+                      color: Color(0xFF4F5D73),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            // Terms & Privacy Buttons in column
+            Column(
+              children: [
+                SizedBox(
+                  height: 56,
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.black),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () {
+                        showPolicyPopup(
+                        context: context,
+                        title: 'Terms of Service',
+                        content: 'Here you display your Terms of Service content...',
+                      );
+                      },
+                    child: const Text(
+                      'Terms of Service',
+                      style: TextStyle(
+                        color: Color(0xFF1E232C),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 56,
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.black),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () {
+                        showPolicyPopup(
+                        context: context,
+                        title: 'Privacy Policy',
+                        content: 'Here you display privacy policy content...',
+                      );
+                      },
+                    child: const Text(
+                      'Privacy Policy',
+                      style: TextStyle(
+                        color: Color(0xFF1E232C),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
             const Spacer(),
+
+            // Disclaimer text above button
+            const Text(
+              'By clicking "I agree", I agree to everything above and accept the Terms of Service and Privacy Policy.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w400,
+                fontSize: 13,
+                height: 1.5,
+                color: Color(0xFF2E2E43),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // I Agree button
             SizedBox(
-              width: double.infinity,
+              width: 331,
               height: 56,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1E232C),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 onPressed: _nextStep,
-                child: const Text('I Agree'),
+                child: const Text(
+                  'I Agree',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 32)
+
+            const SizedBox(height: 24),
           ],
         ),
-      );
+      ),
+    );
 
-  Widget _buildMediaAccessStep() => Padding(
-        padding: const EdgeInsets.all(24),
+
+Widget _buildMediaAccessStep() => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 40),
-            const Text(
-              'Hardware Access',
-              style: TextStyle(
-                fontFamily: 'Urbanist',
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
+            // Back button
+            Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _previousStep,
+                ),
               ),
             ),
+
+            const SizedBox(height: 20),
+
+            // Title
+             Text(
+                        'Hardware Access',
+                        style: GoogleFonts.urbanist(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w700,
+                          height: 1.3,
+                          letterSpacing: -0.01,
+                          color: const Color(0xFF1E232C),
+                          shadows: const [
+                            Shadow(
+                              offset: Offset(0, 2),
+                              blurRadius: 4,
+                              color: Color(0x40000000),
+                            ),
+                          ],
+                        ),
+                      ),
+
+            const Spacer(),
+
+            // Image
+            Center(
+              child: Image.asset(
+                'assets/image/app-permission.png',
+                width: 204,
+                height: 280,
+              ),
+            ),
+
             const SizedBox(height: 24),
-            Image.asset('assets/image/app-permission.png', height: 200),
-            const SizedBox(height: 16),
+
+            // Subheading
             const Text(
               'Microphone, Camera & Bluetooth',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
+
+            // Description
             const Text(
               'To make video calls, give access to your microphone & camera. To use Bluetooth devices, please give access to Bluetooth.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
             ),
+
             const Spacer(),
+
+            // Give Access Button
             SizedBox(
-              width: double.infinity,
+              width: 331,
               height: 56,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                onPressed: () {},
-                child: const Text('Give Access'),
+                onPressed: () {
+                  // Handle permissions here
+                },
+                child: const Text(
+                  'Give Access',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
               ),
-            )
+            ),
+
+            const SizedBox(height: 20),
           ],
         ),
-      );
-
-  
-Widget _styledInputField({
-  required String label,
-  required TextEditingController controller,
-  bool obscure = false,
-  Widget? suffixIcon,
-  String? Function(String?)? validator,
-}) {
-  return Container(
-    height: 56,
-    decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey.shade400),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: Center(
-      child: TextFormField(
-        controller: controller,
-        obscureText: obscure,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: label,
-          suffixIcon: suffixIcon,
-        ),
-        validator: validator,
       ),
-    ),
-  );
+    );
 }
-}
+
+
