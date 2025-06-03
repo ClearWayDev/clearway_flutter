@@ -1,5 +1,4 @@
 import 'package:clearway/components/dashboardscreen.dart';
-import 'package:clearway/components/homescreen.dart';
 import 'package:clearway/components/signinscreen.dart';
 import 'package:clearway/components/signupscreen.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +8,8 @@ import 'package:firebase_core/firebase_core.dart';
 import '../firebase/firebase_options.dart';
 
 import './components/backendUrlWidget.dart';
+import 'package:clearway/components/splashscreen.dart'; 
+import 'package:clearway/components/welcomescreen.dart'; 
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,11 +28,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      initialRoute: '/home',
+      initialRoute: '/',
       routes: {
-        '/home': (context) =>  HomeScreen(),
+        '/': (context) => const SplashScreen(),
+        '/welcome': (context) =>  WelcomeScreen(),
         '/signin': (context) => const SigninScreen(),
-        '/signup': (context) => const SignupScreen(),
+        '/signup': (context) => const SignupFlowScreen(),
         '/dashboard': (context) =>  DashboardScreen(),
       },
       

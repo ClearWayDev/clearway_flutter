@@ -18,7 +18,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _signOut(BuildContext context) async {
     await _authService.signOut();
-    Navigator.pushReplacementNamed(context, '/home');
+    Navigator.pushReplacementNamed(context, '/signin');
   }
 
   Future<void> _startCapture() async {
