@@ -1,3 +1,6 @@
+import 'package:clearway/components/dashboardscreen.dart';
+import 'package:clearway/components/signinscreen.dart';
+import 'package:clearway/components/signupscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import './services/notifications.dart';
@@ -5,20 +8,8 @@ import 'package:firebase_core/firebase_core.dart';
 import '../firebase/firebase_options.dart';
 
 import './components/backendUrlWidget.dart';
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
+import 'package:clearway/components/splashscreen.dart'; 
+import 'package:clearway/components/welcomescreen.dart'; 
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,11 +18,31 @@ Future<void> main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-@override
-Widget build(BuildContext context) {
-  // TODO: implement build
-  throw UnimplementedError();
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'ClearWay',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/welcome': (context) =>  WelcomeScreen(),
+        '/signin': (context) => const SigninScreen(),
+        '/signup': (context) => const SignupFlowScreen(),
+        '/dashboard': (context) =>  DashboardScreen(),
+      },
+      
+    );
+  }
 }
+
+// You can keep this MyHomePage if you want to display BackendUrlWidget as a separate page,
+// or remove it if you want to handle that widget inside one of the screens.
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -44,7 +55,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String? _fcmToken;
-  NotificationService notificationService = NotificationService();
+  final NotificationService notificationService = NotificationService();
+
   @override
   void initState() {
     super.initState();
@@ -58,24 +70,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  /* String _lastMessage = "";
-
-  _MyHomePageState() {
-    _messageStreamController.listen((message) {
-      setState(() {
-        if (message.notification != null) {
-          _lastMessage =
-              'Received a notification message:'
-              '\nTitle=${message.notification?.title},'
-              '\nBody=${message.notification?.body},'
-              '\nData=${message.data}';
-        } else {
-          _lastMessage = 'Received a data message: ${message.data}';
-        }
-      });
-    });
-  }
-  */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
