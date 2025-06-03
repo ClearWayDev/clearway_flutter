@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:clearway/services/authservice.dart';
+import 'package:clearway/widgets/inputfield.dart';
 
 class SigninScreen extends StatefulWidget {
   const SigninScreen({super.key});
@@ -89,64 +90,45 @@ class _SigninScreenState extends State<SigninScreen> {
 
                       const SizedBox(height: 30),
 
-                      // Email Field
-                      Container(
-                        height: 56,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade400),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Center(
-                          child: TextFormField(
-                            controller: _emailController,
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              hintText: 'Enter your email',
-                            ),
-                            validator: (value) => value != null &&
-                                    value.contains('@')
-                                ? null
-                                : 'Enter a valid email',
-                          ),
-                        ),
-                      ),
+                     // Email Field
+styledInputField(
+  label: 'Enter your email',
+  controller: _emailController,
+  validator: (value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Email is required';
+    } else if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w]{2,4}').hasMatch(value)) {
+      return 'Enter a valid email';
+    }
+    return null;
+  },
+),
 
-                      const SizedBox(height: 20),
+const SizedBox(height: 20),
 
-                      // Password Field
-                      Container(
-                        height: 56,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade400),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Center(
-                          child: TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText: 'Enter your password',
-                              suffixIcon: IconButton(
-                                icon: Icon(_obscurePassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                              ),
-                            ),
-                            validator: (value) => value != null &&
-                                    value.length >= 6
-                                ? null
-                                : 'Password too short',
-                          ),
-                        ),
-                      ),
+// Password Field
+styledInputField(
+  label: 'Enter your password',
+  controller: _passwordController,
+  obscure: _obscurePassword,
+  validator: (value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Password is required';
+    } else if (value.length < 6) {
+      return 'Password too short';
+    }
+    return null;
+  },
+  suffixIcon: IconButton(
+    icon: Icon(
+      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+      color: Colors.grey.shade600,
+    ),
+    onPressed: () {
+      setState(() => _obscurePassword = !_obscurePassword);
+    },
+  ),
+),
 
                       const SizedBox(height: 12),
 
@@ -238,3 +220,5 @@ class _SigninScreenState extends State<SigninScreen> {
     );
   }
 }
+
+
