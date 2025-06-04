@@ -10,6 +10,8 @@ import '../firebase/firebase_options.dart';
 import './components/backendUrlWidget.dart';
 import 'package:clearway/components/splashscreen.dart'; 
 import 'package:clearway/components/welcomescreen.dart'; 
+import 'package:clearway/components/forgotpassword.dart'; 
+
 import 'package:clearway/providers/fcm_token_state.dart';
 
 Future<void> main() async {
@@ -36,6 +38,7 @@ class MyApp extends StatelessWidget {
         '/signin': (context) => const SigninScreen(),
         '/signup': (context) => const SignupFlowScreen(),
         '/dashboard': (context) =>  DashboardScreen(),
+        '/forgot-password': (context) =>  ForgotPasswordScreen(),
       },
       
     );
