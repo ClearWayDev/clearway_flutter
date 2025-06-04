@@ -10,6 +10,7 @@ import '../firebase/firebase_options.dart';
 import './components/backendUrlWidget.dart';
 import 'package:clearway/components/splashscreen.dart'; 
 import 'package:clearway/components/welcomescreen.dart'; 
+import 'package:clearway/providers/fcm_token_state.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,29 +45,34 @@ class MyApp extends StatelessWidget {
 // You can keep this MyHomePage if you want to display BackendUrlWidget as a separate page,
 // or remove it if you want to handle that widget inside one of the screens.
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends ConsumerStatefulWidget  {
   const MyHomePage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  ConsumerState<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  String? _fcmToken;
+class _MyHomePageState extends ConsumerState<MyHomePage> {
   final NotificationService notificationService = NotificationService();
 
   @override
   void initState() {
     super.initState();
-    _getFCMToken();
+    _initializeFCMToken();
   }
 
-  Future<void> _getFCMToken() async {
-    String? token = await notificationService.getFCMToken();
-    setState(() {
-      _fcmToken = token;
+   Future<void> _initializeFCMToken() async {
+    final token = await notificationService.getFCMToken();
+    if (token != null) {
+      ref.read(fcmTokenProvider.notifier).setToken(token);
+
+    }
+
+    // listen for token refresh
+    notificationService.listenTokenRefresh((newToken) {
+    ref.read(fcmTokenProvider.notifier).setToken(newToken);
     });
   }
 
