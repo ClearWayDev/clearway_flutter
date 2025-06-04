@@ -5,6 +5,9 @@ import 'package:clearway/widgets/inputfield.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clearway/providers/fcm_token_state.dart';
 import 'package:clearway/providers/user_state.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:clearway/utils/firebase_error.dart';
 
 class SigninScreen extends ConsumerStatefulWidget  {
   const SigninScreen({super.key});
@@ -43,15 +46,19 @@ class _SigninScreenState extends ConsumerState<SigninScreen> {
       // Navigate to dashboard
       Navigator.pushReplacementNamed(context, '/dashboard');
     }
-  } on Exception catch (e) {
+  } on FirebaseAuthException catch (e) {
+    final message = getFirebaseAuthErrorMessage(e);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Sign In Failed: $e')),
+      SnackBar(content: Text('Sign In Failed: $message')),
     );
-  } finally {
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Sign In Failed: ${e.toString()}')),
+    );
+  }finally {
     setState(() => _isLoading = false);
   }
 }
-
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +153,9 @@ styledInputField(
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                           onPressed: () {
+                            Navigator.pushNamed(context, '/forgot-password');
+                            },
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                           ),

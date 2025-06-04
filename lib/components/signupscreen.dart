@@ -9,6 +9,9 @@ import 'package:clearway/providers/user_state.dart';
 
 import 'package:clearway/models/user.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:clearway/utils/firebase_error.dart';
+
 class SignupFlowScreen extends ConsumerStatefulWidget {
   const SignupFlowScreen({super.key});
 
@@ -76,9 +79,14 @@ class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
       // Navigate to next step
         _nextStep();
     }
-  } on Exception catch (e) {
+  } on FirebaseAuthException catch (e) {
+    final message = getFirebaseAuthErrorMessage(e);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Sign In Failed: $e')),
+      SnackBar(content: Text('Signup Failed: $message')),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Signup Failed: ${e.toString()}')),
     );
   } finally {
     setState(() => _isLoading = false);
