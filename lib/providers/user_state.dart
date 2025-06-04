@@ -1,14 +1,14 @@
 // user_notifier.dart
+import 'package:clearway/models/user_info.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/user.dart';
 
-class UserState extends StateNotifier<User?> {
+class UserState extends StateNotifier<UserInfo?> {
   UserState()
     : super(
-        User(accountType: UserType.blind, email: "sfdf", uid: "fdfdfd"),
+        UserInfo(userType: UserType.blind, fcmToken: "sfdf", uid: "fdfdfd"),
       ); // null means no user logged in
 
-  void setUser(User user) => state = user;
+  void setUser(UserInfo user) => state = user;
 
   void updateUID(String newUID) {
     if (state != null) {
@@ -19,6 +19,6 @@ class UserState extends StateNotifier<User?> {
   void logout() => state = null;
 }
 
-final userProvider = StateNotifierProvider<UserState, User?>((ref) {
+final userProvider = StateNotifierProvider<UserState, UserInfo?>((ref) {
   return UserState();
 });

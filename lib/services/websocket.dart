@@ -35,7 +35,7 @@ class WebSocketService {
 
     socket.emit('init', {
       'uid': userInfo!.uid,
-      'userType': userInfo.accountType.toString().split('.').last,
+      'userType': userInfo.userType.toString().split('.').last,
       'fcmToken': "dfdfdf",
     });
 
