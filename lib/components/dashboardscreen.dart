@@ -2,14 +2,17 @@ import 'package:clearway/services/authservice.dart';
 import 'package:clearway/services/imagedescription.dart';
 import 'package:flutter/material.dart';
 
-class DashboardScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:clearway/providers/user_state.dart';
+
+class DashboardScreen extends ConsumerStatefulWidget  {
   DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final AuthService _authService = AuthService();
   final ImageDescriptionService _imageDescriptionService = ImageDescriptionService();
 
@@ -18,6 +21,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _signOut(BuildContext context) async {
     await _authService.signOut();
+    // remove user state
+    ref.read(userProvider.notifier).logout();
     Navigator.pushReplacementNamed(context, '/signin');
   }
 
@@ -34,7 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = _authService.currentUser;
+    final user = ref.watch(userProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -53,7 +58,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Welcome to Dashboard, ${user?.name ?? 'User'}!'),
+                  Text('Welcome to Dashboard, ${user?.username ?? 'User'}!'),
+                  Text('User Id, ${user?.uid ?? 'id'}!'),
+                  Text('FCM token, ${user?.fcmToken ?? 'token'}!'),
+                  Text('User type, ${user?.userType ?? 'type'}!'),
                   const SizedBox(height: 20),
                   if (_description != null)
                     Padding(

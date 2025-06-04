@@ -2,18 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:clearway/widgets/inputfield.dart';
 import 'package:clearway/widgets/policypopup.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:clearway/providers/fcm_token_state.dart';
+import 'package:clearway/services/authservice.dart';
+import 'package:clearway/providers/user_state.dart';
 
-enum UserType { blind, volunteer }
+import 'package:clearway/models/user.dart';
 
-class SignupFlowScreen extends StatefulWidget {
+class SignupFlowScreen extends ConsumerStatefulWidget {
   const SignupFlowScreen({super.key});
 
   @override
-  State<SignupFlowScreen> createState() => _SignupFlowScreenState();
+  ConsumerState<SignupFlowScreen> createState() => _SignupFlowScreenState();
 }
 
-class _SignupFlowScreenState extends State<SignupFlowScreen> {
+class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
     final _formKey = GlobalKey<FormState>();
+    final _authService = AuthService();
 
   int _currentStep = 0;
   bool _isLoading = false;
@@ -46,9 +51,42 @@ class _SignupFlowScreenState extends State<SignupFlowScreen> {
     Navigator.pushReplacementNamed(context, '/signin');
   }
   
-  Future<void> _register() async {
+  Future<void> _validateform() async {
     if (!_formKey.currentState!.validate()) return;
   _nextStep();
+}
+
+ Future<void> _register() async {
+    setState(() => _isLoading = true);
+
+  try {
+    final fcmToken = ref.watch(fcmTokenProvider) ?? '';
+    final user = await _authService.signUp(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+      _nameController.text.trim(),
+      _accountType!,
+      fcmToken,
+    );
+
+    if (user != null) {
+      // Set user info in Riverpod state
+      ref.read(userProvider.notifier).setUser(user);
+
+      // Navigate to next step
+        _nextStep();
+    }
+  } on Exception catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Sign In Failed: $e')),
+    );
+  } finally {
+    setState(() => _isLoading = false);
+  }
+}
+Future<void> _hardwareAccess() async {
+  // Navigate to dashboard
+  Navigator.pushReplacementNamed(context, '/dashboard');
 }
 
   @override
@@ -319,7 +357,7 @@ Widget _buildSignupFormStep() => Padding(
               height: 56,
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _register,
+                onPressed: _isLoading ? null : _validateform,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1E232C),
                   shape: RoundedRectangleBorder(
@@ -542,7 +580,7 @@ Widget _buildSignupFormStep() => Padding(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                onPressed: _nextStep,
+                onPressed: _isLoading ? null : _register,
                 child: const Text(
                   'I Agree',
                   style: TextStyle(
@@ -641,9 +679,7 @@ Widget _buildMediaAccessStep() => SafeArea(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                onPressed: () {
-                  // Handle permissions here
-                },
+                onPressed: _isLoading ? null : _hardwareAccess,
                 child: const Text(
                   'Give Access',
                   style: TextStyle(

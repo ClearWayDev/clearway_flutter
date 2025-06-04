@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:clearway/services/authservice.dart';
 import 'package:clearway/widgets/inputfield.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:clearway/providers/fcm_token_state.dart';
+import 'package:clearway/providers/user_state.dart';
 
-class SigninScreen extends StatefulWidget {
+class SigninScreen extends ConsumerStatefulWidget  {
   const SigninScreen({super.key});
 
   @override
-  State<SigninScreen> createState() => _SigninScreenState();
+  ConsumerState<SigninScreen> createState() => _SigninScreenState();
 }
 
-class _SigninScreenState extends State<SigninScreen> {
+class _SigninScreenState extends ConsumerState<SigninScreen> {
   final _formKey = GlobalKey<FormState>();
   final _authService = AuthService();
 
@@ -21,27 +24,34 @@ class _SigninScreenState extends State<SigninScreen> {
   bool _obscurePassword = true;
 
   Future<void> _signIn() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      final user = await _authService.signIn(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
+  try {
+    final fcmToken = ref.watch(fcmTokenProvider) ?? '';
+    final user = await _authService.signIn(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+      fcmToken,
+    );
 
-      if (user != null) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
-      }
-    } on Exception catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign In Failed: $e')),
-      );
-    } finally {
-      setState(() => _isLoading = false);
+    if (user != null) {
+      // Set user info in Riverpod state
+      ref.read(userProvider.notifier).setUser(user);
+
+      // Navigate to dashboard
+      Navigator.pushReplacementNamed(context, '/dashboard');
     }
+  } on Exception catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Sign In Failed: $e')),
+    );
+  } finally {
+    setState(() => _isLoading = false);
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
