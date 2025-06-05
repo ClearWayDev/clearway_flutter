@@ -50,6 +50,12 @@ class NotificationService {
     return await FirebaseMessaging.instance.getToken();
   }
 
+  void listenTokenRefresh(Function(String) onRefresh) {
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      onRefresh(newToken);
+    });
+  }
+
   BehaviorSubject<RemoteMessage> get messageStream => _messageStreamController;
 
   void dispose() {

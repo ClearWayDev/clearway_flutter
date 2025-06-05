@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:clearway/services/authservice.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:clearway/providers/auth_provider.dart';
+import 'package:clearway/providers/user_state.dart';
+import 'package:clearway/models/user.dart';
 
-
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget  {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
-  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -32,17 +32,22 @@ class _SplashScreenState extends State<SplashScreen>
 
     // After splash duration, navigate to home
     Timer(const Duration(seconds: 3), _navigateUser);
+
   }
 
-   void _navigateUser() {
-    final user = _authService.currentUser;
-    if (user != null) {
-      Navigator.pushReplacementNamed(context, '/dashboard');
+    void _navigateUser() {
+      final authState = ref.watch(authStateProvider).value;
+      final userState = ref.watch(userProvider);
+    if (authState != null) {
+      if(userState?.userType == UserType.blind){
+         Navigator.pushReplacementNamed(context, '/dashboard/blind/home');
+      } else {
+         Navigator.pushReplacementNamed(context, '/dashboard/guide/home');
+      } 
     } else {
       Navigator.pushReplacementNamed(context, '/welcome');
     }
   }
-
   @override
   void dispose() {
     _controller.dispose();
