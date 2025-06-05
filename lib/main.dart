@@ -1,6 +1,3 @@
-import 'package:clearway/components/dashboardscreen.dart';
-import 'package:clearway/components/signinscreen.dart';
-import 'package:clearway/components/signupscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import './services/notifications.dart';
@@ -8,11 +5,9 @@ import 'package:firebase_core/firebase_core.dart';
 import '../firebase/firebase_options.dart';
 
 import './components/backendUrlWidget.dart';
-import 'package:clearway/components/splashscreen.dart'; 
-import 'package:clearway/components/welcomescreen.dart'; 
-import 'package:clearway/components/forgotpassword.dart'; 
 
 import 'package:clearway/providers/fcm_token_state.dart';
+import 'package:clearway/routes.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,26 +16,18 @@ Future<void> main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget  {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'ClearWay',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/welcome': (context) =>  WelcomeScreen(),
-        '/signin': (context) => const SigninScreen(),
-        '/signup': (context) => const SignupFlowScreen(),
-        '/dashboard': (context) =>  DashboardScreen(),
-        '/forgot-password': (context) =>  ForgotPasswordScreen(),
-      },
-      
+      onGenerateRoute: AppRouter.generateRoute,
     );
   }
 }

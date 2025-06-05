@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clearway/providers/fcm_token_state.dart';
 import 'package:clearway/providers/user_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:clearway/models/user.dart';
 
 import 'package:clearway/utils/firebase_error.dart';
 
@@ -43,9 +44,14 @@ class _SigninScreenState extends ConsumerState<SigninScreen> {
       // Set user info in Riverpod state
       ref.read(userProvider.notifier).setUser(user);
 
-      // Navigate to dashboard
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    }
+      if (!mounted) return;
+      
+      if(user.userType == UserType.blind){
+         Navigator.pushReplacementNamed(context, '/dashboard/blind/home');
+      } else {
+         Navigator.pushReplacementNamed(context, '/dashboard/guide/home');
+      } 
+    } 
   } on FirebaseAuthException catch (e) {
     final message = getFirebaseAuthErrorMessage(e);
     ScaffoldMessenger.of(context).showSnackBar(

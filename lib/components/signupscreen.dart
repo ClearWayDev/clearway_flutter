@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clearway/providers/fcm_token_state.dart';
 import 'package:clearway/services/authservice.dart';
 import 'package:clearway/providers/user_state.dart';
+import 'package:clearway/providers/auth_provider.dart';
 
 import 'package:clearway/models/user.dart';
 
@@ -93,8 +94,17 @@ class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
   }
 }
 Future<void> _hardwareAccess() async {
-  // Navigate to dashboard
-  Navigator.pushReplacementNamed(context, '/dashboard');
+      final authState = ref.watch(authStateProvider).value;
+      final userState = ref.watch(userProvider);
+  if (authState != null) {
+      if(userState?.userType == UserType.blind){
+         Navigator.pushReplacementNamed(context, '/dashboard/blind/home');
+      } else {
+         Navigator.pushReplacementNamed(context, '/dashboard/guide/home');
+      } 
+    } else {
+      Navigator.pushReplacementNamed(context, '/welcome');
+    }
 }
 
   @override

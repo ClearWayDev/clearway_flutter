@@ -1,0 +1,73 @@
+// router/app_router.dart
+import 'package:flutter/material.dart';
+import 'package:clearway/components/splashscreen.dart';
+import 'package:clearway/components/welcomescreen.dart';
+import 'package:clearway/components/signinscreen.dart';
+import 'package:clearway/components/signupscreen.dart';
+import 'package:clearway/components/forgotpassword.dart';
+import 'package:clearway/components/dashboards/blind_dashboard.dart';
+import 'package:clearway/components/dashboards/guide_dashboard.dart';
+import 'package:clearway/components/dashboards/blind/home_screen.dart';
+import 'package:clearway/components/dashboards/blind/profile_screen.dart';
+import 'package:clearway/components/dashboards/guide/home_screen.dart';
+import 'package:clearway/components/dashboards/guide/profile_screen.dart';
+import 'package:clearway/utils/route_guard.dart';
+import 'package:clearway/models/user.dart';
+
+class AppRouter {
+  static Route<dynamic> generateRoute(RouteSettings settings) {
+    return MaterialPageRoute(
+      settings: settings,
+      builder: (context) => _buildScreen(context, settings),
+    );
+  }
+
+  static Widget _buildScreen(BuildContext context, RouteSettings settings) {
+    switch (settings.name) {
+      case '/':
+        return const SplashScreen();
+      case '/welcome':
+        return const WelcomeScreen();
+
+      case '/signin':
+        return RouteGuard(
+          requireAuth: false,
+          builder: (_) => const SigninScreen(),
+        );
+      case '/signup':
+        return RouteGuard(
+          requireAuth: false,
+          builder: (_) => const SignupFlowScreen(),
+        );
+      case '/forgot-password':
+        return const ForgotPasswordScreen();
+
+      case '/dashboard/blind/home':
+        return RouteGuard(
+          requireAuth: true,
+          requiredUserType: UserType.blind,
+          builder: (_) => BlindDashboard(child: const  BlindHomeScreen()),
+        );
+      case '/dashboard/blind/profile':
+        return RouteGuard(
+          requireAuth: true,
+          requiredUserType: UserType.blind,
+          builder: (_) => BlindDashboard(child: const BlindProfileScreen()),
+        );
+      case '/dashboard/guide/home':
+        return RouteGuard(
+          requireAuth: true,
+          requiredUserType: UserType.volunteer,
+          builder: (_) => GuideDashboard(child: const GuideHomeScreen()),
+        );
+      case '/dashboard/guide/profile':
+        return RouteGuard(
+          requireAuth: true,
+          requiredUserType: UserType.volunteer,
+          builder: (_) => GuideDashboard(child: const GuideProfileScreen()),
+        );
+      default:
+        return const SplashScreen();
+    }
+  }
+}

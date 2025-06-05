@@ -74,6 +74,38 @@ class AuthService {
     );
   }
 
+  Future<UserInfo?> getCurrentUserData() async {
+  final fb.User? currentUser = _firebaseAuth.currentUser;
+  if (currentUser == null) {
+    // No user logged in
+    return null;
+  }
+
+  final uid = currentUser.uid;
+
+  final doc = await _firestore.collection('users').doc(uid).get();
+  if (!doc.exists) return null;
+
+  final data = doc.data()!;
+
+  final userType = (data['isBlind'] == true)
+      ? UserType.blind
+      : UserType.volunteer;
+
+  String fcmToken = '';
+  if (data.containsKey('fcmToken')) {
+    fcmToken = data['fcmToken'] as String;
+  }
+
+  return UserInfo(
+    uid: uid,
+    userType: userType,
+    fcmToken: fcmToken,
+    username: data['name'] ?? '',
+  );
+}
+
+
   // Sign out
   Future<void> signOut() async {
     await _firebaseAuth.signOut();
