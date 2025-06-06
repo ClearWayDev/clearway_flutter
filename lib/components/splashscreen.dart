@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clearway/providers/auth_provider.dart';
 import 'package:clearway/providers/user_state.dart';
 import 'package:clearway/models/user.dart';
+import 'package:clearway/services/authservice.dart';
 
 class SplashScreen extends ConsumerStatefulWidget  {
   const SplashScreen({super.key});
@@ -18,22 +19,42 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late Animation<double> _animation;
 
   @override
-  void initState() {
-    super.initState();
+void initState() {
+  super.initState();
+  _controller = AnimationController(
+    duration: const Duration(seconds: 3),
+    vsync: this,
+  );
+  _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+  _controller.forward();
+ 
+  _initializeApp();
+}
 
-    _controller = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    );
 
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+Future<void> _initializeApp() async {
+  // 1. Wait for Firebase Auth ready
+  final fbUser = await ref.read(authStateProvider.future);
 
-    _controller.forward();
+  if (fbUser != null) {
+    // 2. Fetch full user info from Firestore
+    final userInfo = await AuthService().getCurrentUserData();
 
-    // After splash duration, navigate to home
-    Timer(const Duration(seconds: 3), _navigateUser);
-
+    // 3. Update userProvider with full user info
+    if (userInfo != null) {
+      ref.read(userProvider.notifier).setUser(userInfo);
+    }
+  } else {
+    // No logged in user
+    ref.read(userProvider.notifier).logout();
   }
+
+  // 4. Wait for the splash animation duration or any other delay you want
+  await Future.delayed(const Duration(seconds: 3));
+
+  // 5. Then navigate
+  _navigateUser();
+}
 
     void _navigateUser() {
       final authState = ref.watch(authStateProvider).value;
