@@ -9,7 +9,7 @@ class UserInfo {
 
   UserInfo({required this.uid,required this.username, required this.userType, required this.fcmToken});
 
-  UserInfo copyWith({String? uid, UserType? userType, String? fcmToken}) {
+  UserInfo copyWith({String? uid, UserType? userType, String? fcmToken,String? username}) {
     return UserInfo(
       uid: uid ?? this.uid,
       username: username ?? this.username,

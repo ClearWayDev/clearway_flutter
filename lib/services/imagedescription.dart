@@ -106,6 +106,7 @@ class ImageDescriptionService {
   Future<void> speak(String text) async {
     print("🔊 Invoking speak()...");
     try {
+      await _flutterTts.stop();
       await _flutterTts.setLanguage("en-US");
       await _flutterTts.setSpeechRate(0.5);
       await _flutterTts.setPitch(1.0);
@@ -116,6 +117,17 @@ class ImageDescriptionService {
     }
   }
 
+  Future<void> stopSpeak() async {
+  print("🛑 Stopping speech...");
+  try {
+    await _flutterTts.stop();
+    print("✅ Speech stopped successfully");
+  } catch (e) {
+    print("❌ Error stopping speech: $e");
+  }
+}
+
+  /// Full pipeline: capture, describe, speak
   /// New toggle method to start/stop continuous capture + describe + speak
   /// Returns the latest description after stopping, or null if started
   Future<String?> captureDescribeSpeak() async {

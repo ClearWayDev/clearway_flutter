@@ -5,6 +5,8 @@ import 'package:clearway/providers/auth_provider.dart';
 import 'package:clearway/providers/user_state.dart';
 import 'package:clearway/models/user.dart';
 import 'package:clearway/services/authservice.dart';
+import 'package:clearway/services/imagedescription.dart';
+import 'package:clearway/constants/tts_messages.dart';
 
 class SplashScreen extends ConsumerStatefulWidget  {
   const SplashScreen({super.key});
@@ -17,6 +19,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+
+    final AuthService _authService = AuthService();
+      final ImageDescriptionService _imageDescriptionService = ImageDescriptionService();
+
+
 
   @override
 void initState() {
@@ -33,14 +40,16 @@ void initState() {
 
 
 Future<void> _initializeApp() async {
-  // 1. Wait for Firebase Auth ready
+
+    await _imageDescriptionService.speak(TtsMessages.splashScreen);
+  // Wait for Firebase Auth ready
   final fbUser = await ref.read(authStateProvider.future);
 
   if (fbUser != null) {
-    // 2. Fetch full user info from Firestore
-    final userInfo = await AuthService().getCurrentUserData();
+    // Fetch full user info from Firestore
+    final userInfo = await _authService.getCurrentUserData();
 
-    // 3. Update userProvider with full user info
+    // Update userProvider with full user info
     if (userInfo != null) {
       ref.read(userProvider.notifier).setUser(userInfo);
     }
@@ -49,10 +58,10 @@ Future<void> _initializeApp() async {
     ref.read(userProvider.notifier).logout();
   }
 
-  // 4. Wait for the splash animation duration or any other delay you want
+  // Wait for the splash animation duration or any other delay you want
   await Future.delayed(const Duration(seconds: 3));
 
-  // 5. Then navigate
+  // Then navigate
   _navigateUser();
 }
 
