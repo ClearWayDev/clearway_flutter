@@ -105,7 +105,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     ImageDescriptionService().stopSpeak();
+                    Future.delayed(const Duration(milliseconds: 500), () {
                     Navigator.pushNamed(context, '/signin');
+                    });
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,

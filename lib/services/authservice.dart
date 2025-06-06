@@ -105,6 +105,31 @@ class AuthService {
   );
 }
 
+Future<Map<String, dynamic>?> getUserDetails(String uid) async {
+    final doc = await _firestore.collection('users').doc(uid).get();
+    if (!doc.exists) return null;
+
+    final data = doc.data()!;
+    return {
+      'username': data['name'] ?? '',
+      'email': data['email'] ?? '',
+      'userType': data['isBlind'] == true ? UserType.blind : UserType.volunteer,
+    };
+}
+
+Future<bool> updateUsername(String uid, String newName) async {
+    // Update Firestore
+    await _firestore.collection('users').doc(uid).update({'name': newName});
+
+    // Update Firebase Auth display name
+    final user = _firebaseAuth.currentUser;
+    if (user != null && user.uid == uid) {
+      await user.updateDisplayName(newName);
+    }
+
+    return true;
+}
+
 
   // Sign out
   Future<void> signOut() async {

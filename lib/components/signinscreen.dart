@@ -24,7 +24,7 @@ class _SigninScreenState extends ConsumerState<SigninScreen> {
   void initState() {
     super.initState();
 
-    Future.delayed(const Duration(milliseconds: 300), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
     // Describe the screen
     ImageDescriptionService().speak(TtsMessages.signinScreen);
   });
@@ -81,6 +81,7 @@ class _SigninScreenState extends ConsumerState<SigninScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFFFFFFFF),
       body: SafeArea(
         child: Column(

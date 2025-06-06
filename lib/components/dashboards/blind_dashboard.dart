@@ -1,15 +1,42 @@
-// blind_dashboard.dart
-import 'package:flutter/material.dart';
 import 'package:clearway/services/imagedescription.dart';
-class BlindDashboard extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:clearway/providers/user_state.dart';
+
+class BlindDashboard extends ConsumerWidget {
   final Widget child;
 
   const BlindDashboard({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(userProvider);
+
     return Scaffold(
-      body: child,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Hi, ${user?.username ?? 'User'} 👋',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.grey,
+                    child: Icon(Icons.notifications, size: 20, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: child),
+          ],
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _calculateSelectedIndex(context),
         onTap: (index) => _onItemTapped(index, context),
@@ -32,7 +59,7 @@ class BlindDashboard extends StatelessWidget {
     final routes = ['/dashboard/blind/home', '/dashboard/blind/profile'];
     await ImageDescriptionService().stopSpeak();
     Future.delayed(const Duration(milliseconds: 300), () {
-        Navigator.pushReplacementNamed(context, routes[index]);
-  }); 
+      Navigator.pushReplacementNamed(context, routes[index]);
+    });
   }
 }
