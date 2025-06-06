@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:io' show File; // Only used on mobile
+import 'dart:async';
 
 import 'package:flutter/foundation.dart'; // for kIsWeb
 import 'package:flutter_tts/flutter_tts.dart';
@@ -12,6 +13,10 @@ class ImageDescriptionService {
   final FlutterTts _flutterTts = FlutterTts();
   final String _geminiApiKey =
       "AIzaSyBoGLXppwecH6WXz75fmc0w0YwiqIxsw_k"; // Store securely in production
+
+  // Internal flags for loop control
+  bool _isLooping = false;
+  bool _stopRequested = false;
 
   /// Request camera permission before capture
   Future<bool> _requestCameraPermission() async {
@@ -83,7 +88,6 @@ class ImageDescriptionService {
             "- Mention any obstacles or dangers (like steps, walls, vehicles, or other people). "
             "Keep the description clear and short so it can be spoken by a voice assistant.",
           ),
-
           DataPart('image/jpeg', imageBytes),
         ]),
       ]);
@@ -124,19 +128,52 @@ class ImageDescriptionService {
 }
 
   /// Full pipeline: capture, describe, speak
+  /// New toggle method to start/stop continuous capture + describe + speak
+  /// Returns the latest description after stopping, or null if started
   Future<String?> captureDescribeSpeak() async {
-    print("🚀 Starting captureDescribeSpeak() pipeline...");
-
-    final photo = await capturePhoto();
-    if (photo == null) {
-      print("❗ Pipeline stopped: No photo captured.");
+    if (_isLooping) {
+      // If already looping, request stop
+      print("⏹️ Stopping the captureDescribeSpeak loop...");
+      _stopRequested = true;
       return null;
+    } else {
+      // If not looping, start the loop
+      _isLooping = true;
+      _stopRequested = false;
+      print("▶️ Starting captureDescribeSpeak loop...");
+
+      String? lastDescription;
+
+      while (!_stopRequested) {
+        final photo = await capturePhoto();
+        if (photo == null) {
+          print("❗ No photo captured, stopping loop.");
+          break;
+        }
+
+        final description = await describeImage(photo);
+        lastDescription = description;
+
+        await speak(description);
+
+        if (_stopRequested) {
+          print("⏹️ Stop requested, breaking loop.");
+          break;
+        }
+
+        print("⏳ Waiting 10 seconds before next capture...");
+        // Wait 10 seconds before next iteration or break early if stop requested
+        for (int i = 0; i < 10; i++) {
+          if (_stopRequested) break;
+          await Future.delayed(const Duration(seconds: 1));
+        }
+      }
+
+      _isLooping = false;
+      _stopRequested = false;
+      print("✅ captureDescribeSpeak loop stopped.");
+
+      return lastDescription;
     }
-
-    final description = await describeImage(photo);
-    await speak(description);
-
-    print("✅ captureDescribeSpeak() completed.");
-    return description;
   }
 }
