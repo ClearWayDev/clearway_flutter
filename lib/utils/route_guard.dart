@@ -25,36 +25,38 @@ class RouteGuard extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => const Center(child: Text("Error loading user")),
       data: (fbUser) {
-        // Not logged in and route needs auth → redirect to /signin
         if (requireAuth && fbUser == null) {
-          Future.microtask(() => Navigator.pushReplacementNamed(context, '/signin'));
+          _safeRedirect(context, '/signin');
           return const SizedBox.shrink();
         }
 
-        //Logged in, and route requires auth
         if (requireAuth && fbUser != null) {
-          //userProvider state not available → show error
           if (userInfo == null) {
             return const Center(child: Text("User info not loaded"));
           }
 
-          // Wrong user type → redirect to correct dashboard
           if (requiredUserType != null && userInfo.userType != requiredUserType) {
             final redirectRoute = userInfo.userType == UserType.blind
                 ? '/dashboard/blind/home'
                 : '/dashboard/guide/home';
 
-            Future.microtask(() => Navigator.pushReplacementNamed(context, redirectRoute));
+            _safeRedirect(context, redirectRoute);
             return const SizedBox.shrink();
           }
 
-          // show the protected route
           return builder(context);
         }
 
-        // Public route (no auth required)
-        return builder(context);
+        return builder(context); 
       },
     );
+  }
+
+  void _safeRedirect(BuildContext context, String route) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ModalRoute.of(context)?.isCurrent == true) {
+        Navigator.of(context).pushReplacementNamed(route);
+      }
+    });
   }
 }
