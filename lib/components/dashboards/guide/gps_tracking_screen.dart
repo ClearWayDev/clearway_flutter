@@ -14,12 +14,12 @@ class _GpsTrackingScreenState extends ConsumerState<GpsTrackingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Video Call'),
+        title: const Text('GPS Tracking'),
         automaticallyImplyLeading: false,
       ),
       body: const Center(
         child: Text(
-          'Blind Video call Screen',
+          'GPS Tracking Screen',
           style: TextStyle(fontSize: 24),
         ),
       ),

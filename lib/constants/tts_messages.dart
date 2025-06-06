@@ -1,6 +1,3 @@
-
-import 'package:clearway/components/dashboards/guide/gps_tracking_screen.dart';
-
 class TtsMessages {
   static const splashScreen = 
     "Loading Clearway app";
