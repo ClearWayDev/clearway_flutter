@@ -3,8 +3,7 @@ import 'package:clearway/services/imagedescription.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clearway/providers/user_state.dart';
-import 'package:clearway/providers/auth_provider.dart';
-
+import 'package:clearway/constants/tts_messages.dart';
 
 class BlindHomeScreen extends ConsumerStatefulWidget {
   const BlindHomeScreen({super.key});
@@ -14,6 +13,16 @@ class BlindHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
+  
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(milliseconds: 300), () {
+    // Describe the screen
+    ImageDescriptionService().speak(TtsMessages.dashboardScreen);
+  });
+  }
   final AuthService _authService = AuthService();
   final ImageDescriptionService _imageDescriptionService = ImageDescriptionService();
 
@@ -21,8 +30,9 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
   bool _loading = false;
 
   void _signOut() async {
+    await _imageDescriptionService.stopSpeak();
     await _authService.signOut();
-    ref.read(userProvider.notifier).logout();
+    ref.read(userProvider.notifier).logout();  
   }
 
   Future<void> _startCapture() async {

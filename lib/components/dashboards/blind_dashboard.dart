@@ -1,6 +1,6 @@
 // blind_dashboard.dart
 import 'package:flutter/material.dart';
-
+import 'package:clearway/services/imagedescription.dart';
 class BlindDashboard extends StatelessWidget {
   final Widget child;
 
@@ -28,8 +28,11 @@ class BlindDashboard extends StatelessWidget {
     return 0;
   }
 
-  void _onItemTapped(int index, BuildContext context) {
+  void _onItemTapped(int index, BuildContext context) async {
     final routes = ['/dashboard/blind/home', '/dashboard/blind/profile'];
-    Navigator.pushReplacementNamed(context, routes[index]);
+    await ImageDescriptionService().stopSpeak();
+    Future.delayed(const Duration(milliseconds: 300), () {
+        Navigator.pushReplacementNamed(context, routes[index]);
+  }); 
   }
 }

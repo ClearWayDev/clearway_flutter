@@ -7,6 +7,8 @@ import 'package:clearway/providers/fcm_token_state.dart';
 import 'package:clearway/providers/user_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:clearway/models/user.dart';
+import 'package:clearway/services/imagedescription.dart';
+import 'package:clearway/constants/tts_messages.dart';
 
 import 'package:clearway/utils/firebase_error.dart';
 
@@ -18,6 +20,16 @@ class SigninScreen extends ConsumerStatefulWidget  {
 }
 
 class _SigninScreenState extends ConsumerState<SigninScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(milliseconds: 300), () {
+    // Describe the screen
+    ImageDescriptionService().speak(TtsMessages.signinScreen);
+  });
+  }
+
   final _formKey = GlobalKey<FormState>();
   final _authService = AuthService();
 

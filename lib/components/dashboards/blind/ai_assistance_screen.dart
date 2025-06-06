@@ -3,22 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clearway/services/imagedescription.dart';
 import 'package:clearway/constants/tts_messages.dart';
 
-class BlindProfileScreen extends ConsumerStatefulWidget {
-  const BlindProfileScreen({super.key});
+class AiAssistanceScreen extends ConsumerStatefulWidget {
+  const AiAssistanceScreen({super.key});
 
   @override
-  ConsumerState<BlindProfileScreen> createState() => _BlindProfileScreenState();
+  ConsumerState<AiAssistanceScreen> createState() => _AiAssistanceScreenState();
 }
 
-class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
+class _AiAssistanceScreenState extends ConsumerState<AiAssistanceScreen> {
     final ImageDescriptionService _imageDescriptionService = ImageDescriptionService();
+
   @override
   void initState() {
     super.initState();
 
     Future.delayed(const Duration(milliseconds: 300), () {
       // Describe the screen
-      _imageDescriptionService.speak(TtsMessages.profileScreen);
+      _imageDescriptionService.speak(TtsMessages.aiAssistanceScreen);
     });
   }
 
@@ -26,12 +27,12 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: const Text('AI Assistance'),
         automaticallyImplyLeading: false,
       ),
       body: const Center(
         child: Text(
-          'Blind User Profile',
+          'AI assistance screen',
           style: TextStyle(fontSize: 24),
         ),
       ),

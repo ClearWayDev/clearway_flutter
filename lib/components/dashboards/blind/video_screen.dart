@@ -3,22 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clearway/services/imagedescription.dart';
 import 'package:clearway/constants/tts_messages.dart';
 
-class BlindProfileScreen extends ConsumerStatefulWidget {
-  const BlindProfileScreen({super.key});
+class BlindVideoCallScreen extends ConsumerStatefulWidget {
+  const BlindVideoCallScreen({super.key});
 
   @override
-  ConsumerState<BlindProfileScreen> createState() => _BlindProfileScreenState();
+  ConsumerState<BlindVideoCallScreen> createState() => _BlindVideoCallScreenState();
 }
 
-class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
+class _BlindVideoCallScreenState extends ConsumerState<BlindVideoCallScreen> {
     final ImageDescriptionService _imageDescriptionService = ImageDescriptionService();
+
   @override
   void initState() {
     super.initState();
 
     Future.delayed(const Duration(milliseconds: 300), () {
       // Describe the screen
-      _imageDescriptionService.speak(TtsMessages.profileScreen);
+      _imageDescriptionService.speak(TtsMessages.videoCallScreen);
     });
   }
 
@@ -26,12 +27,12 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: const Text('Video Call'),
         automaticallyImplyLeading: false,
       ),
       body: const Center(
         child: Text(
-          'Blind User Profile',
+          'Blind Video call Screen',
           style: TextStyle(fontSize: 24),
         ),
       ),

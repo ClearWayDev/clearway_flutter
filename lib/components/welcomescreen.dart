@@ -1,8 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:clearway/services/imagedescription.dart';
+import 'package:clearway/constants/tts_messages.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(milliseconds: 300), () {
+    // Describe the screen
+    ImageDescriptionService().speak(TtsMessages.welcomeScreen);
+  });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +104,7 @@ class WelcomeScreen extends StatelessWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
+                    ImageDescriptionService().stopSpeak();
                     Navigator.pushNamed(context, '/signin');
                   },
                   style: ElevatedButton.styleFrom(
