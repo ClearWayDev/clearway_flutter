@@ -14,7 +14,7 @@ class VideoCallWidget extends StatefulWidget {
 
 class _VideoCallWidgetState extends State<VideoCallWidget> {
   late WebRTCService _webrtcService;
-  final WebSocketService _webSocketService = WebSocketService();
+  final WebSocketService _webSocketService = WebSocketService.getInstance();
 
   @override
   void initState() {

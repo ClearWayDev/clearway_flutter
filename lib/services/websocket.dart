@@ -5,6 +5,7 @@ import '../providers/appInfo_state.dart';
 import '../providers/user_state.dart';
 
 class WebSocketService {
+  static WebSocketService? _instance;
   late IO.Socket socket =
       socket = IO.io("http://localhost", <String, dynamic>{
         'transports': ['websocket'],
@@ -12,8 +13,15 @@ class WebSocketService {
       });
   final container = ProviderContainer();
 
-  WebSocketService() {
+  WebSocketService._internal() {
     initService();
+  }
+
+  static WebSocketService getInstance() {
+    if (_instance == null) {
+      _instance = WebSocketService._internal();
+    }
+    return _instance!;
   }
 
   void initService() {
@@ -24,6 +32,7 @@ class WebSocketService {
       print("AppInfo changed: $next");
       if (next != previous) {
         disconnect();
+        _instance = null; // Reset instance on appInfo change
         initService();
       }
     });

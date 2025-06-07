@@ -129,6 +129,11 @@ class WebRTCService {
     _remoteRenderer.dispose();
   }
 
+  bool isConnectionEstablished() {
+    return _peerConnection.connectionState ==
+        RTCPeerConnectionState.RTCPeerConnectionStateConnected;
+  }
+
   // Getters for the renderers
   RTCVideoRenderer get localRenderer => _localRenderer;
   RTCVideoRenderer get remoteRenderer => _remoteRenderer;

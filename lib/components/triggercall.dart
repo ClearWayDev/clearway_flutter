@@ -1,8 +1,11 @@
+import 'package:clearway/services/websocket.dart';
 import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:uuid/uuid.dart';
 
 class TriggerCall {
+  static final websocket = WebSocketService.getInstance();
+
   static void handleIncomingCall(String myUId, String destUId) async {
     await FlutterCallkitIncoming.showCallkitIncoming(
       CallKitParams(
@@ -58,12 +61,16 @@ class TriggerCall {
   }
 
   static void _onCallAccepted(String myUId, String destUid) {
-    print('Call accepted: ${destUid}');
-    //TODO:  Add your logic for call acceptance here
+    websocket.socket.emit('call-accepted', {
+      'myUId': myUId,
+      'destUId': destUid,
+    });
   }
 
   static void _onCallDeclined(String myUId, String destUid) {
-    print('Call declined: ${destUid}');
-    //TODO:  Add your logic for call rejection here
+    websocket.socket.emit('call-declined', {
+      'myUId': myUId,
+      'destUId': destUid,
+    });
   }
 }
