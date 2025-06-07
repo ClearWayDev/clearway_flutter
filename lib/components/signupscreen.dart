@@ -1,3 +1,4 @@
+import 'package:clearway/constants/policies.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:clearway/widgets/inputfield.dart';
@@ -525,7 +526,7 @@ Widget _buildSignupFormStep() => Padding(
                         showPolicyPopup(
                         context: context,
                         title: 'Terms of Service',
-                        content: 'Here you display your Terms of Service content...',
+                        content: termsOfService,
                       );
                       },
                     child: const Text(
@@ -554,7 +555,7 @@ Widget _buildSignupFormStep() => Padding(
                         showPolicyPopup(
                         context: context,
                         title: 'Privacy Policy',
-                        content: 'Here you display privacy policy content...',
+                        content: privacyPolicy,
                       );
                       },
                     child: const Text(
