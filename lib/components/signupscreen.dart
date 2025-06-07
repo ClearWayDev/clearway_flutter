@@ -13,6 +13,7 @@ import 'package:clearway/models/user.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:clearway/utils/firebase_error.dart';
+import 'package:clearway/utils/top_snackbar.dart';
 
 class SignupFlowScreen extends ConsumerStatefulWidget {
   const SignupFlowScreen({super.key});
@@ -77,19 +78,15 @@ class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
     if (user != null) {
       // Set user info in Riverpod state
       ref.read(userProvider.notifier).setUser(user);
-
+      showTopSnackBar(context, 'User registered successfully!', type: TopSnackBarType.success);
       // Navigate to next step
         _nextStep();
     }
   } on FirebaseAuthException catch (e) {
     final message = getFirebaseAuthErrorMessage(e);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Signup Failed: $message')),
-    );
+    showTopSnackBar(context, 'Signup Failed: $message', type: TopSnackBarType.error);
   } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Signup Failed: ${e.toString()}')),
-    );
+    showTopSnackBar(context, 'Signup Failed: ${e.toString()}', type: TopSnackBarType.error);
   } finally {
     setState(() => _isLoading = false);
   }

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:clearway/utils/firebase_error.dart';
+import 'package:clearway/utils/top_snackbar.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -30,19 +31,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await _authService.sendPasswordResetEmail(_emailController.text.trim());
 
       setState(() => _mailSent = true);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password reset link sent!')),
-      );
+      
+       showTopSnackBar(context, 'Password reset link sent', type: TopSnackBarType.error);
     } on FirebaseAuthException catch (e) {
     final message = getFirebaseAuthErrorMessage(e);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $message')),
-    );
+      showTopSnackBar(context, 'Error: $message', type: TopSnackBarType.error);
   } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: ${e.toString()}')),
-    );
+      showTopSnackBar(context, 'Error: ${e.toString()}', type: TopSnackBarType.error);
   } finally {
       setState(() => _isLoading = false);
     }

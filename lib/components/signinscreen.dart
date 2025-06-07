@@ -11,6 +11,7 @@ import 'package:clearway/services/imagedescription.dart';
 import 'package:clearway/constants/tts_messages.dart';
 
 import 'package:clearway/utils/firebase_error.dart';
+import 'package:clearway/utils/top_snackbar.dart';
 
 class SigninScreen extends ConsumerStatefulWidget  {
   const SigninScreen({super.key});
@@ -57,7 +58,8 @@ class _SigninScreenState extends ConsumerState<SigninScreen> {
       ref.read(userProvider.notifier).setUser(user);
 
       if (!mounted) return;
-      
+      showTopSnackBar(context, 'Signed in successfully!', type: TopSnackBarType.success);
+
       if(user.userType == UserType.blind){
          Navigator.pushReplacementNamed(context, '/dashboard/blind/home');
       } else {
@@ -66,13 +68,9 @@ class _SigninScreenState extends ConsumerState<SigninScreen> {
     } 
   } on FirebaseAuthException catch (e) {
     final message = getFirebaseAuthErrorMessage(e);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Sign In Failed: $message')),
-    );
+    showTopSnackBar(context, 'Sign In Failed: $message', type: TopSnackBarType.error);
   } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Sign In Failed: ${e.toString()}')),
-    );
+    showTopSnackBar(context, 'Sign In Failed: ${e.toString()}', type: TopSnackBarType.error);
   }finally {
     setState(() => _isLoading = false);
   }
