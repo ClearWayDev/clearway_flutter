@@ -3,7 +3,7 @@ import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:uuid/uuid.dart';
 
 class TriggerCall {
-  static void handleIncomingCall() async {
+  static void handleIncomingCall(String myUId, String destUId) async {
     await FlutterCallkitIncoming.showCallkitIncoming(
       CallKitParams(
         id: Uuid().v4(),
@@ -47,23 +47,23 @@ class TriggerCall {
           // TODO: show screen calling in Flutter
           break;
         case Event.actionCallAccept:
-          _onCallAccepted(event.body);
+          _onCallAccepted(myUId, destUId);
           break;
         case Event.actionCallDecline:
-          _onCallDeclined(event.body);
+          _onCallDeclined(myUId, destUId);
           break;
         default:
       }
     });
   }
 
-  static void _onCallAccepted(Map<String, dynamic> event) {
-    print('Call accepted: ${event['id']}');
+  static void _onCallAccepted(String myUId, String destUid) {
+    print('Call accepted: ${destUid}');
     //TODO:  Add your logic for call acceptance here
   }
 
-  static void _onCallDeclined(Map<String, dynamic> event) {
-    print('Call declined: ${event['id']}');
+  static void _onCallDeclined(String myUId, String destUid) {
+    print('Call declined: ${destUid}');
     //TODO:  Add your logic for call rejection here
   }
 }
