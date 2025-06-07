@@ -18,10 +18,11 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
 
   bool _editing = false;
   bool _loading = true;
-  bool _saving = false; // Add saving state
+  bool _saving = false;
+  bool _keyboardVisible = false; // Track keyboard visibility
 
   final _usernameController = TextEditingController();
-  final _usernameFocusNode = FocusNode(); // Add focus node
+  final _usernameFocusNode = FocusNode();
   String _username = '';
   String _email = '';
   String _role = '';
@@ -29,6 +30,14 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // Listen to focus changes to track keyboard visibility
+    _usernameFocusNode.addListener(() {
+      setState(() {
+        _keyboardVisible = _usernameFocusNode.hasFocus;
+      });
+    });
+    
     Future.delayed(const Duration(milliseconds: 300), () async {
       _imageDescriptionService.speak(TtsMessages.profileScreen);
 
@@ -68,19 +77,17 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
       _editing = true;
     });
     await _imageDescriptionService.stopSpeak();
-    // Auto-focus on the text field when editing starts
     Future.delayed(const Duration(milliseconds: 100), () {
       _usernameFocusNode.requestFocus();
     });
-      await Future.delayed(const Duration(milliseconds: 400));
-    // Provide audio feedback
+    await Future.delayed(const Duration(milliseconds: 400));
     _imageDescriptionService.speak("Username editing enabled.");
   }
 
   void _cancelEdit() {
     setState(() {
       _editing = false;
-      _usernameController.text = _username; // Reset to original value
+      _usernameController.text = _username;
     });
     _usernameFocusNode.unfocus();
     _imageDescriptionService.speak("Username editing cancelled.");
@@ -95,7 +102,6 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
     }
 
     if (updatedUsername == _username) {
-      // No change, just exit edit mode
       setState(() => _editing = false);
       _usernameFocusNode.unfocus();
       _imageDescriptionService.speak("No changes made");
@@ -131,17 +137,24 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
     }
   }
 
-void _logout() async {
-  _imageDescriptionService.stopSpeak();
-  await Future.delayed(const Duration(milliseconds: 300));
-  await _authService.signOut();
-  ref.read(userProvider.notifier).logout();
-
-  if (context.mounted) {
-    Navigator.pushReplacementNamed(context, '/signin');
+  void _logout() async {
+    _imageDescriptionService.stopSpeak();
+    await _authService.signOut();
+    ref.read(userProvider.notifier).logout();
+    if (context.mounted) {
+      Navigator.pushReplacementNamed(context, '/signin');
+    }
   }
-}
 
+  void _navigateToHome() {
+    // Only navigate if not editing and keyboard is not visible
+    if (!_editing && !_keyboardVisible) {
+      _imageDescriptionService.stopSpeak();
+      Future.delayed(const Duration(milliseconds: 500), () {
+        Navigator.pushReplacementNamed(context, '/dashboard/blind/home');
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -153,138 +166,151 @@ void _logout() async {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
+          : Stack(
               children: [
-                // Top Half: Profile content
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Your Profile',
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _usernameController,
-                          focusNode: _usernameFocusNode,
-                          enabled: !_saving, // Disable during saving
-                          readOnly: !_editing, // Use readOnly instead of enabled for better control
-                          decoration: InputDecoration(
-                            labelText: 'Username',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            filled: true,
-                            fillColor: _editing ? Colors.white : Colors.grey.shade100,
-                            suffixIcon: _saving
-                                ? const Padding(
-                                    padding: EdgeInsets.all(12.0),
-                                    child: SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    ),
-                                  )
-                                : _editing
-                                    ? Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.check, color: Colors.green),
-                                            onPressed: _saveUsername,
-                                            tooltip: 'Save username',
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.close, color: Colors.red),
-                                            onPressed: _cancelEdit,
-                                            tooltip: 'Cancel editing',
-                                          ),
-                                        ],
-                                      )
-                                    : IconButton(
-                                        icon: const Icon(Icons.edit),
-                                        onPressed: _enableEdit,
-                                        tooltip: 'Edit username',
-                                      ),
-                          ),
-                          onSubmitted: _editing ? (_) => _saveUsername() : null,
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: TextEditingController(text: _email),
-                          enabled: false,
-                          decoration: InputDecoration(
-                            labelText: 'Email',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade100,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: TextEditingController(text: _role),
-                          enabled: false,
-                          decoration: InputDecoration(
-                            labelText: 'Role',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade100,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
+                Column(
+                  children: [
+                    // Top Half: Profile content - Use Flexible instead of Expanded
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, '/forgot-password');
-                                },
-                                icon: const Icon(Icons.lock_reset),
-                                label: const Text('Reset Password'),
-                              ),
+                            const Text(
+                              'Your Profile',
+                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: _logout,
-                                icon: const Icon(Icons.logout),
-                                label: const Text('Logout'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: _usernameController,
+                              focusNode: _usernameFocusNode,
+                              enabled: !_saving,
+                              readOnly: !_editing,
+                              decoration: InputDecoration(
+                                labelText: 'Username',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
+                                filled: true,
+                                fillColor: _editing ? Colors.white : Colors.grey.shade100,
+                                suffixIcon: _saving
+                                    ? const Padding(
+                                        padding: EdgeInsets.all(12.0),
+                                        child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        ),
+                                      )
+                                    : _editing
+                                        ? Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(Icons.check, color: Colors.green),
+                                                onPressed: _saveUsername,
+                                                tooltip: 'Save username',
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.close, color: Colors.red),
+                                                onPressed: _cancelEdit,
+                                                tooltip: 'Cancel editing',
+                                              ),
+                                            ],
+                                          )
+                                        : IconButton(
+                                            icon: const Icon(Icons.edit),
+                                            onPressed: _enableEdit,
+                                            tooltip: 'Edit username',
+                                          ),
+                              ),
+                              onSubmitted: _editing ? (_) => _saveUsername() : null,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: TextEditingController(text: _email),
+                              enabled: false,
+                              decoration: InputDecoration(
+                                labelText: 'Email',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.shade100,
                               ),
                             ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: TextEditingController(text: _role),
+                              enabled: false,
+                              decoration: InputDecoration(
+                                labelText: 'Role',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.shade100,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      Navigator.pushNamed(context, '/forgot-password');
+                                    },
+                                    icon: const Icon(Icons.lock_reset),
+                                    label: const Text('Reset Password'),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: _logout,
+                                    icon: const Icon(Icons.logout),
+                                    label: const Text('Logout'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Add extra space when keyboard is visible
+                            if (_keyboardVisible) const SizedBox(height: 100),
                           ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-
-                // Bottom Half: Tap to go home
-                GestureDetector(
-                  onTap: () {
-                    _imageDescriptionService.stopSpeak();
-                    Future.delayed(const Duration(milliseconds: 500), () {
-                      Navigator.pushReplacementNamed(context, '/dashboard/blind/home');
-                    });
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    height: MediaQuery.of(context).size.height * 0.4,
-                    color: Colors.grey.shade200,
-                    child: const Center(
-                      child: Text(
-                        'Tap here to return to Home',
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                
+                // Bottom navigation area - positioned absolutely
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: IgnorePointer(
+                    ignoring: _editing || _keyboardVisible, // Disable when editing or keyboard visible
+                    child: GestureDetector(
+                      onTap: _navigateToHome,
+                      child: Container(
+                        width: double.infinity,
+                        height: MediaQuery.of(context).size.height * 0.4,
+                        color: (_editing || _keyboardVisible) 
+                            ? Colors.transparent // Make transparent when disabled
+                            : Colors.grey.shade200,
+                        child: Center(
+                          child: Text(
+                            (_editing || _keyboardVisible)
+                                ? '' // Hide text when editing
+                                : 'Tap here to return to Home',
+                            style: const TextStyle(fontSize: 16, color: Colors.black54),
+                          ),
+                        ),
                       ),
                     ),
                   ),

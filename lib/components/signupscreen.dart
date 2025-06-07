@@ -523,6 +523,7 @@ Widget _buildSignupFormStep() => Padding(
                       ),
                     ),
                     onPressed: () {
+                      FocusScope.of(context).unfocus();
                         showPolicyPopup(
                         context: context,
                         title: 'Terms of Service',
@@ -552,6 +553,7 @@ Widget _buildSignupFormStep() => Padding(
                       ),
                     ),
                     onPressed: () {
+                      FocusScope.of(context).unfocus();
                         showPolicyPopup(
                         context: context,
                         title: 'Privacy Policy',
