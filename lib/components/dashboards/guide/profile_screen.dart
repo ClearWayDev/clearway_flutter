@@ -225,7 +225,7 @@ class _GuideProfileScreenState extends ConsumerState<GuideProfileScreen> {
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            Navigator.pushNamed(context, '/forgot-password');
+                            Navigator.pushNamed(context, '/reset-password');
                           },
                           icon: const Icon(Icons.lock_reset),
                           label: const Text('Reset Password'),

@@ -171,7 +171,7 @@ styledInputField(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                            onPressed: () {
-                            Navigator.pushNamed(context, '/forgot-password');
+                            Navigator.pushNamed(context, '/reset-password');
                             },
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,

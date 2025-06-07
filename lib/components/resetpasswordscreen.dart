@@ -1,20 +1,22 @@
 import 'package:clearway/services/authservice.dart';
-import 'package:clearway/widgets/inputfield.dart'; 
+import 'package:clearway/widgets/inputfield.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:clearway/utils/firebase_error.dart';
 import 'package:clearway/utils/top_snackbar.dart';
+import 'package:clearway/providers/auth_provider.dart';
 
-class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({super.key});
+class ResetPasswordScreen extends ConsumerStatefulWidget {
+  const ResetPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final AuthService _authService = AuthService();
@@ -31,21 +33,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await _authService.sendPasswordResetEmail(_emailController.text.trim());
 
       setState(() => _mailSent = true);
-      
-       showTopSnackBar(context, 'Password reset link sent', type: TopSnackBarType.success);
+      showTopSnackBar(context, 'Password reset link sent', type: TopSnackBarType.success);
     } on FirebaseAuthException catch (e) {
-    final message = getFirebaseAuthErrorMessage(e);
+      final message = getFirebaseAuthErrorMessage(e);
       showTopSnackBar(context, 'Error: $message', type: TopSnackBarType.error);
-  } catch (e) {
+    } catch (e) {
       showTopSnackBar(context, 'Error: ${e.toString()}', type: TopSnackBarType.error);
-  } finally {
+    } finally {
       setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authStateProvider);
+    final bool isLoggedIn = authState.asData?.value != null;
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
@@ -74,7 +79,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                       // Title
                       Text(
-                        'Forgot Password?',
+                        isLoggedIn
+                            ? "Reset Password"
+                            : "Forgot Password?",
                         style: GoogleFonts.urbanist(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
@@ -83,9 +90,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Description
+                      // Conditional Description
                       Text(
-                        "Don't worry! It occurs. Please enter the email address linked with your account.",
+                        isLoggedIn
+                            ? "You can reset your password here by entering your account email."
+                            : "Don't worry! It occurs. Please enter the email address linked with your account.",
                         textAlign: TextAlign.center,
                         style: GoogleFonts.urbanist(
                           fontSize: 16,
@@ -145,21 +154,27 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
             ),
 
-            // Bottom Link
+            // Bottom Link (Conditional)
             Padding(
               padding: const EdgeInsets.only(bottom: 24),
               child: TextButton(
-                onPressed: () => Navigator.pushReplacementNamed(context, '/signin'),
+                onPressed: () {
+                  if (isLoggedIn) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushReplacementNamed(context, '/signin');
+                  }
+                },
                 child: Text.rich(
                   TextSpan(
-                    text: "Remember Password? ",
+                    text: isLoggedIn ? "Go back to " : "Remember Password? ",
                     style: GoogleFonts.urbanist(
                       fontSize: 14,
                       color: Colors.black,
                     ),
                     children: [
                       TextSpan(
-                        text: 'Login',
+                        text: isLoggedIn ? "Profile" : "Login",
                         style: GoogleFonts.urbanist(
                           fontWeight: FontWeight.w600,
                           color: Colors.blue,
