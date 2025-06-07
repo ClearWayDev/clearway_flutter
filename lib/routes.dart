@@ -4,7 +4,7 @@ import 'package:clearway/components/splashscreen.dart';
 import 'package:clearway/components/welcomescreen.dart';
 import 'package:clearway/components/signinscreen.dart';
 import 'package:clearway/components/signupscreen.dart';
-import 'package:clearway/components/forgotpassword.dart';
+import 'package:clearway/components/resetpasswordscreen.dart';
 import 'package:clearway/components/dashboards/blind_dashboard.dart';
 import 'package:clearway/components/dashboards/guide_dashboard.dart';
 import 'package:clearway/components/dashboards/blind/home_screen.dart';
@@ -42,8 +42,8 @@ class AppRouter {
           requireAuth: false,
           builder: (_) => const SignupFlowScreen(),
         );
-      case '/forgot-password':
-        return const ForgotPasswordScreen();
+      case '/reset-password':
+        return const ResetPasswordScreen();
 
       case '/dashboard/blind/home':
         return RouteGuard(
