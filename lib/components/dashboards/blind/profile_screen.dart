@@ -308,7 +308,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                             (_editing || _keyboardVisible)
                                 ? '' // Hide text when editing
                                 : 'Tap here to return to Home',
-                            style: const TextStyle(fontSize: 16, color: Colors.black54),
+                            style: const TextStyle(fontSize: 20, color: Colors.black54),
                           ),
                         ),
                       ),

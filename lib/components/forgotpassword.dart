@@ -32,7 +32,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
       setState(() => _mailSent = true);
       
-       showTopSnackBar(context, 'Password reset link sent', type: TopSnackBarType.error);
+       showTopSnackBar(context, 'Password reset link sent', type: TopSnackBarType.success);
     } on FirebaseAuthException catch (e) {
     final message = getFirebaseAuthErrorMessage(e);
       showTopSnackBar(context, 'Error: $message', type: TopSnackBarType.error);
