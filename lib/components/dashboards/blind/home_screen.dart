@@ -50,11 +50,11 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
 
   void _processTaps() {
     switch (_tapCount) {
-      case 1:
-        _handleSingleTap();
-        break;
       case 2:
         _handleDoubleTap();
+        break;
+      case 3:
+        _handleTripleTap();
         break;
       default:
         _handleInvalidTap();
@@ -66,13 +66,27 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
     _lastTapTime = null;
   }
 
-  void _handleSingleTap() {
-    // AI assistance functionality
-    _imageDescriptionService.speak("AI assistance activated. How can I help you?");
-    // _triggerAIAssistance();
-  }
+void _handleDoubleTap() async {
+  await _imageDescriptionService.speak("AI assistance activated.");
+  
+  await _imageDescriptionService.stopSpeak();
+  await Future.delayed(const Duration(seconds: 1));
 
-  void _handleDoubleTap() {
+  await _imageDescriptionService.speak("Capturing surroundings");
+
+  final description = await _imageDescriptionService.captureDescribeSpeak();
+
+  if (description == null) {
+    await _imageDescriptionService.stopSpeak();
+    await Future.delayed(const Duration(seconds: 1));
+    _imageDescriptionService.speak("Capture stopped or failed. Try again.");
+  } else {
+    // Already spoken in captureDescribeSpeak()
+    print("AI Description: $description");
+  }
+}
+
+  void _handleTripleTap() {
     // Video call functionality
     _imageDescriptionService.speak("Video call feature activated.");
     // _triggerVideoCall();
@@ -81,7 +95,7 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
   void _handleInvalidTap() {
     // Invalid tap count - provide guidance
     _imageDescriptionService.speak(
-      "Invalid input detected. Please tap once for AI assistance or twice for video call feature. Try again."
+      "Invalid input detected. Please tap twice for AI assistance or three times for video call feature. Try again."
     );
   }
 
@@ -129,7 +143,7 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
               ),
               const SizedBox(height: 4),
               const Text(
-                'Tap once for AI assistance\nTap twice for video call',
+                'Tap twice for AI assistance\nTap three times for video call',
                 style: TextStyle(color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
