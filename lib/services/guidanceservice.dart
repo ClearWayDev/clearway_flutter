@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-
 class GuidanceService {
   final String _googleApiKey = dotenv.env['DIRECTION_KEY'] ?? '';
 
@@ -13,17 +12,20 @@ class GuidanceService {
       if (!hasPermission) return "Location permission denied.";
 
       final position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-      final origin = "${position.latitude},${position.longitude}";
-      final destination = Uri.encodeComponent(destinationPlaceName);
-
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=$origin'
-        '&destination=$destination'
-        '&mode=walking'
-        '&key=$_googleApiKey',
+        desiredAccuracy: LocationAccuracy.high,
       );
+      final origin = "${position.latitude},${position.longitude}";
+      // final destination = Uri.encodeComponent(destinationPlaceName);
+
+      final url =
+          Uri.https('maps.googleapis.com', '/maps/api/directions/json', {
+            'origin': origin,
+            'destination': destinationPlaceName,
+            'mode': 'walking',
+            'key': _googleApiKey,
+          });
+
+      print("🚀 Request URL: $url");
 
       final response = await http.get(url);
       if (response.statusCode != 200) {
@@ -36,9 +38,11 @@ class GuidanceService {
       }
 
       final steps = data['routes'][0]['legs'][0]['steps'];
-      final instructions = steps.map<String>((step) {
-        return _stripHtmlTags(step['html_instructions']);
-      }).join(', ');
+      final instructions = steps
+          .map<String>((step) {
+            return _stripHtmlTags(step['html_instructions']);
+          })
+          .join(', ');
 
       return "Directions to $destinationPlaceName: $instructions";
     } catch (e) {
