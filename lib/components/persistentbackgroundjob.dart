@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:clearway/components/triggercall.dart';
 import 'package:clearway/models/user.dart';
 import 'package:clearway/providers/user_state.dart';
+import 'package:clearway/services/authservice.dart';
 import 'package:clearway/services/websocket.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -116,13 +117,31 @@ Future<void> startBackgroundConnection() async {
     );
   });
 
-  Geolocator.getPositionStream().listen((Position position) {
-    websocket.socket.emit('location-report', {
-      'latitude': position.latitude,
-      'longitude': position.longitude,
-      'UId': userInfo!.uid,
-    });
-  });
+  AuthService authService = new AuthService();
+  final userInfoFirebase = await authService.getCurrentUserData();
+
+  if (await Permission.location.isDenied ||
+      await Permission.location.isPermanentlyDenied) {
+    print("Requesting location permissions...");
+    final status = await Permission.location.request();
+  } else {
+    if (userInfoFirebase != null) {
+      Geolocator.getCurrentPosition().then((Position position) {
+        websocket.socket.emit('location-report', {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+          'UId': userInfoFirebase.uid,
+        });
+      });
+      Geolocator.getPositionStream().listen((Position position) {
+        websocket.socket.emit('location-report', {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+          'UId': userInfoFirebase.uid,
+        });
+      });
+    }
+  }
 }
 
 @pragma('vm:entry-point')
