@@ -11,17 +11,19 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-void startBackgroundService() {
-  final service = FlutterBackgroundService();
-  service.startService();
-}
-
 void stopBackgroundService() {
   final service = FlutterBackgroundService();
   service.invoke("stop");
 }
 
 Future<void> initializeBackgroundService() async {
+  final service = FlutterBackgroundService();
+  // Ensure the service is not already running
+  final isRunning = await service.isRunning();
+  if (isRunning) {
+    print("Background service is already running.");
+    return;
+  }
   print("Initializing background service...");
   const notificationChannelId = 'my_foreground';
   const notificationId = 888;
@@ -30,20 +32,31 @@ Future<void> initializeBackgroundService() async {
     notificationChannelId, // id
     'ClearWay', // title
     description:
-        'This channel is used for persistant notifications.', // description
+        'This channel is used for persistent notifications.', // description
     importance: Importance.high, // importance must be at low or higher level
   );
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  // Request notification permissions
+  if (await Permission.notification.isDenied ||
+      await Permission.notification.isPermanentlyDenied) {
+    print("Requesting notification permissions...");
+    final status = await Permission.notification.request();
+    if (!status.isGranted) {
+      print(
+        "Notification permissions denied. Background service cannot proceed.",
+      );
+      return;
+    }
+  }
+
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin
       >()
       ?.createNotificationChannel(channel);
-
-  final service = FlutterBackgroundService();
 
   await service.configure(
     iosConfiguration: IosConfiguration(autoStart: true, onForeground: onStart),
