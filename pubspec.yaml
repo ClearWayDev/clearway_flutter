@@ -54,6 +54,9 @@ dependencies:
   flutter_launcher_icons: ^0.14.3
   google_fonts: ^6.2.1
   top_snackbar_flutter: ^3.3.0
+  flutter_map: ^8.1.1
+  latlong2: ^0.9.1
+  flutter_map_cancellable_tile_provider: ^3.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
