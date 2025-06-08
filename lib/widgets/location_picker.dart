@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:clearway/utils/top_snackbar.dart';
+import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 // Updated LocationPickerOverlay widget
 class LocationPickerOverlay extends StatefulWidget {
@@ -40,38 +43,58 @@ void initState() {
   });
 }
 
-  Future<void> _getCurrentLocation() async {
+    Future<void> _getCurrentLocation() async {
+    if (kIsWeb) {
+      _showError('Location access not supported on web platform.');
+      return;
+    }
+
     setState(() => _isLoadingCurrentLocation = true);
 
     try {
+      // Check if location services are enabled
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        _showError('Location services are disabled.');
+        _showError('Location services are disabled. Please enable them in settings.');
         return;
       }
 
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _showError('Location permissions are denied.');
-          return;
-        }
+      // Check and request location permission using permission_handler
+      PermissionStatus permission = await Permission.location.status;
+      
+      if (permission.isDenied) {
+        permission = await Permission.location.request();
       }
 
-      if (permission == LocationPermission.deniedForever) {
-        _showError('Location permissions are permanently denied.');
+      if (permission.isDenied) {
+        _showError('Location permission denied. Please grant permission to use this feature.');
         return;
       }
 
+      if (permission.isPermanentlyDenied) {
+        _showError('Location permission permanently denied. Please enable it in app settings.');
+        // Optionally open app settings
+        await openAppSettings();
+        return;
+      }
+
+      // Get current position with timeout and accuracy settings
       final position = await Geolocator.getCurrentPosition();
+
       final newLocation = LatLng(position.latitude, position.longitude);
-      setState(() {
-        _currentLocation = newLocation;
-      });
-      _mapController.move(newLocation, 15.0);
+      
+      if (mounted) {
+        setState(() {
+          _currentLocation = newLocation;
+        });
+        _mapController.move(newLocation, 15.0);
+      }
     } catch (e) {
-      _showError('Error getting location: $e');
+      if (e.toString().contains('TimeoutException')) {
+        _showError('Location request timed out. Please try again.');
+      } else {
+        _showError('Error getting location: ${e.toString()}');
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoadingCurrentLocation = false);
@@ -80,7 +103,7 @@ void initState() {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  showTopSnackBar(context, message , type: TopSnackBarType.error);
   }
 
   @override

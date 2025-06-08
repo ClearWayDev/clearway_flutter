@@ -16,6 +16,7 @@ import 'package:clearway/components/dashboards/guide/profile_screen.dart';
 import 'package:clearway/components/dashboards/guide/gps_tracking_screen.dart';
 import 'package:clearway/utils/route_guard.dart';
 import 'package:clearway/models/user.dart';
+import 'package:clearway/components/accessmediascreen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -41,6 +42,11 @@ class AppRouter {
         return RouteGuard(
           requireAuth: false,
           builder: (_) => const SignupFlowScreen(),
+        );
+        case '/access-media':
+        return RouteGuard(
+          requireAuth: false,
+          builder: (_) => const AccessMediaScreen(),
         );
       case '/reset-password':
         return const ResetPasswordScreen();
