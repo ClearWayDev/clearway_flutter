@@ -8,10 +8,13 @@ import './components/backendUrlWidget.dart';
 
 import 'package:clearway/providers/fcm_token_state.dart';
 import 'package:clearway/routes.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await dotenv.load();
   runApp(const ProviderScope(child: MyApp()));
 }
 
