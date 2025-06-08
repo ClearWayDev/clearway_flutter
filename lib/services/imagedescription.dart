@@ -9,7 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 class ImageDescriptionService {
   final FlutterTts _flutterTts = FlutterTts();
-  final String _geminiApiKey = "AIzaSyBfWeyZMt_PkE_JYTXzNtyGqWC3ttTXWag";
+  final String _geminiApiKey = 'AIzaSyC54BC8i82O4rPnSTp7j2h36kjteHbUmZ0';
 
   bool _isLooping = false;
   bool _stopRequested = false;
