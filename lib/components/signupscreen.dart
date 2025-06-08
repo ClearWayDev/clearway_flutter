@@ -14,6 +14,8 @@ import 'package:clearway/models/user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:clearway/utils/firebase_error.dart';
 import 'package:clearway/utils/top_snackbar.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:clearway/widgets/location_picker.dart';
 
 class SignupFlowScreen extends ConsumerStatefulWidget {
   const SignupFlowScreen({super.key});
@@ -36,6 +38,12 @@ class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
   final _confirmController = TextEditingController();
   final _nameController = TextEditingController();
 
+   // Location variables
+  LatLng? _selectedLocation;
+  String _locationText = 'Enter a familiar location for guidance.';
+  bool _showLocationPicker = false;
+  String? _locationValidationError;
+
   UserType? _accountType;
 
   void _nextStep() {
@@ -53,14 +61,59 @@ class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
     }
   }
 
+ void _openLocationPicker() {
+    setState(() {
+      _showLocationPicker = true;
+    });
+  }
+
+  void _closeLocationPicker() {
+    setState(() {
+      _showLocationPicker = false;
+    });
+  }
+
+  void _onLocationSelected(LatLng location) {
+    setState(() {
+      _selectedLocation = location;
+      _locationText = 'Lat: ${location.latitude.toStringAsFixed(4)}, '
+                      'Lng: ${location.longitude.toStringAsFixed(4)}';
+      _showLocationPicker = false; // Close popup after selection
+    });
+  }
+
+
   void _goToLogin() {
     Navigator.pushReplacementNamed(context, '/signin');
   }
   
-  Future<void> _validateform() async {
-    if (!_formKey.currentState!.validate()) return;
-  _nextStep();
+void _validateform() {
+  bool isFormValid = true;
+  
+  // Clear previous location validation error
+  setState(() {
+    _locationValidationError = null;
+  });
+  
+  // Validate form fields
+  if (!(_formKey.currentState?.validate() ?? false)) {
+    isFormValid = false;
+  }
+  
+  // Validate location for blind users
+  if (_accountType == UserType.blind && _selectedLocation == null) {
+    setState(() {
+      _locationValidationError = 'Location is required for accessibility services';
+    });
+    isFormValid = false;
+  }
+  
+  if (isFormValid) {
+    // Proceed with registration
+    _nextStep();
+  }
 }
+
 
  Future<void> _register() async {
     setState(() => _isLoading = true);
@@ -73,6 +126,7 @@ class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
       _nameController.text.trim(),
       _accountType!,
       fcmToken,
+      _selectedLocation,
     );
 
     if (user != null) {
@@ -257,175 +311,265 @@ Future<void> _hardwareAccess() async {
 
 
 
-Widget _buildSignupFormStep() => Padding(
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Back Button
-            Align(
-              alignment: Alignment.topLeft,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                    _previousStep();
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Title
-            Text(
-                        'Register to get started',
-                        style: GoogleFonts.urbanist(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w700,
-                          height: 1.3,
-                          letterSpacing: -0.01,
-                          color: const Color(0xFF1E232C),
-                          shadows: const [
-                            Shadow(
-                              offset: Offset(0, 2),
-                              blurRadius: 4,
-                              color: Color(0x40000000),
-                            ),
-                          ],
-                        ),
-                      ),
-           
-            const SizedBox(height: 40),
-
-            // Username Field
-            styledInputField(
-              label: 'Username',
-              controller: _nameController,
-              validator: (value) =>
-                  value == null || value.trim().isEmpty ? 'Enter a username' : null,
-            ),
-            const SizedBox(height: 16),
-
-            // Email Field
-            styledInputField(
-              label: 'Email',
-              controller: _emailController,
-              validator: (value) => value != null && value.contains('@')
-                  ? null
-                  : 'Enter a valid email',
-            ),
-            const SizedBox(height: 16),
-
-            // Password Field
-            styledInputField(
-              label: 'Password',
-              controller: _passwordController,
-              obscure: _obscurePassword,
-              suffixIcon: IconButton(
-                icon: Icon(_obscurePassword
-                    ? Icons.visibility_off
-                    : Icons.visibility),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
-              ),
-              validator: (value) {
-                if (value == null || value.length < 6) {
-                  return 'Password too short';
-                }
-                final regex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$');
-                if (!regex.hasMatch(value)) {
-                  return 'Use upper, lower, number (min 6 chars)';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Confirm Password Field
-            styledInputField(
-              label: 'Confirm password',
-              controller: _confirmController,
-              obscure: _obscureCPassword,
-              suffixIcon: IconButton(
-                icon: Icon(_obscureCPassword
-                    ? Icons.visibility_off
-                    : Icons.visibility),
-                onPressed: () {
-                  setState(() {
-                    _obscureCPassword = !_obscureCPassword;
-                  });
-                },
-              ),
-              validator: (value) {
-                if (value != _passwordController.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 32),
-
-            // Register Button
-            SizedBox(
-              height: 56,
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _validateform,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E232C),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+Widget _buildSignupFormStep() => Stack(
+      children: [
+        // Your existing form (wrapped in Stack)
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Back Button
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      _previousStep();
+                    },
                   ),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(
-                        'Register',
-                        style: GoogleFonts.urbanist(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
-            ),
+                const SizedBox(height: 16),
 
-            const Spacer(),
-
-            // Already have account
-            Center(
-              child: TextButton(
-                onPressed: _goToLogin,
-                child: Text.rich(
-                  TextSpan(
-                    text: "Already have an account? ",
-                    style: GoogleFonts.urbanist(
-                      fontSize: 14,
-                      color: Colors.black,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: "Login Now",
-                        style: GoogleFonts.urbanist(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.teal,
-                        ),
+                // Title
+                Text(
+                  'Register to get started',
+                  style: GoogleFonts.urbanist(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                    letterSpacing: -0.01,
+                    color: const Color(0xFF1E232C),
+                    shadows: const [
+                      Shadow(
+                        offset: Offset(0, 2),
+                        blurRadius: 4,
+                        color: Color(0x40000000),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
 
+                const SizedBox(height: 40),
+
+                // Username Field
+                styledInputField(
+                  label: 'Username',
+                  controller: _nameController,
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Enter a username' : null,
+                ),
+                const SizedBox(height: 16),
+
+                // Email Field
+                styledInputField(
+                  label: 'Email',
+                  controller: _emailController,
+                  validator: (value) => value != null && value.contains('@')
+                      ? null
+                      : 'Enter a valid email',
+                ),
+                const SizedBox(height: 16),
+
+                // Password Field
+                styledInputField(
+                  label: 'Password',
+                  controller: _passwordController,
+                  obscure: _obscurePassword,
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscurePassword
+                        ? Icons.visibility_off
+                        : Icons.visibility),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                  validator: (value) {
+                    if (value == null || value.length < 6) {
+                      return 'Password too short';
+                    }
+                    final regex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$');
+                    if (!regex.hasMatch(value)) {
+                      return 'Use upper, lower, number (min 6 chars)';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Confirm Password Field
+                styledInputField(
+                  label: 'Confirm password',
+                  controller: _confirmController,
+                  obscure: _obscureCPassword,
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscureCPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility),
+                    onPressed: () {
+                      setState(() {
+                        _obscureCPassword = !_obscureCPassword;
+                      });
+                    },
+                  ),
+                  validator: (value) {
+                    if (value != _passwordController.text) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
+                ),
+
+                // Location Selection for Blind Users Only
+                if (_accountType == UserType.blind) ...[
+                  const SizedBox(height: 16),
+                  
+                  // Location Selection Button
+                  Container(
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: _locationValidationError != null 
+                            ? Colors.red 
+                            : Colors.grey.shade300
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: InkWell(
+                      onTap: _openLocationPicker,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              color: _selectedLocation != null ? Colors.teal : Colors.grey,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Location *',
+                                    style: GoogleFonts.urbanist(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  Text(
+                                    _locationText,
+                                    style: GoogleFonts.urbanist(
+                                      fontSize: 14,
+                                      color: _selectedLocation != null 
+                                          ? Colors.black 
+                                          : Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Colors.grey.shade400,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  // Location Validation Error
+                  if (_locationValidationError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 16),
+                      child: Text(
+                        _locationValidationError!,
+                        style: const TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontSize: 12,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                ],
+
+                const SizedBox(height: 32),
+
+                // Register Button
+                SizedBox(
+                  height: 56,
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _validateform,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1E232C),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                            'Register',
+                            style: GoogleFonts.urbanist(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+
+                const Spacer(),
+
+                // Already have account
+                Center(
+                  child: TextButton(
+                    onPressed: _goToLogin,
+                    child: Text.rich(
+                      TextSpan(
+                        text: "Already have an account? ",
+                        style: GoogleFonts.urbanist(
+                          fontSize: 14,
+                          color: Colors.black,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: "Login Now",
+                            style: GoogleFonts.urbanist(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.teal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        
+        // Location Picker Overlay (conditionally shown)
+        if (_showLocationPicker)
+          LocationPickerOverlay(
+            initialLocation: _selectedLocation,
+            onLocationSelected: _onLocationSelected,
+            onClose: _closeLocationPicker,
+          ),
+      ],
+    );
 
   Widget _buildPrivacyStep() => SafeArea(
       child: Padding(
