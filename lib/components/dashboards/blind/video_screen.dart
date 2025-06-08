@@ -1,3 +1,4 @@
+import 'package:clearway/components/videoCallWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clearway/services/imagedescription.dart';
@@ -7,11 +8,13 @@ class BlindVideoCallScreen extends ConsumerStatefulWidget {
   const BlindVideoCallScreen({super.key});
 
   @override
-  ConsumerState<BlindVideoCallScreen> createState() => _BlindVideoCallScreenState();
+  ConsumerState<BlindVideoCallScreen> createState() =>
+      _BlindVideoCallScreenState();
 }
 
 class _BlindVideoCallScreenState extends ConsumerState<BlindVideoCallScreen> {
-    final ImageDescriptionService _imageDescriptionService = ImageDescriptionService();
+  final ImageDescriptionService _imageDescriptionService =
+      ImageDescriptionService();
 
   @override
   void initState() {
@@ -31,9 +34,13 @@ class _BlindVideoCallScreenState extends ConsumerState<BlindVideoCallScreen> {
         automaticallyImplyLeading: false,
       ),
       body: const Center(
-        child: Text(
-          'Blind Video call Screen',
-          style: TextStyle(fontSize: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Blind Video call Screen', style: TextStyle(fontSize: 24)),
+            SizedBox(height: 20),
+            VideoCallWidget(),
+          ],
         ),
       ),
     );

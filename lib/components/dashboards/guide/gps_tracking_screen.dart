@@ -1,3 +1,4 @@
+import 'package:clearway/components/videoCallWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,7 +10,6 @@ class GpsTrackingScreen extends ConsumerStatefulWidget {
 }
 
 class _GpsTrackingScreenState extends ConsumerState<GpsTrackingScreen> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,12 +17,7 @@ class _GpsTrackingScreenState extends ConsumerState<GpsTrackingScreen> {
         title: const Text('GPS Tracking'),
         automaticallyImplyLeading: false,
       ),
-      body: const Center(
-        child: Text(
-          'GPS Tracking Screen',
-          style: TextStyle(fontSize: 24),
-        ),
-      ),
+      body: const Center(child: VideoCallWidget()),
     );
   }
 }

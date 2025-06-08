@@ -1,3 +1,6 @@
+import 'package:clearway/models/user.dart';
+import 'package:clearway/providers/user_state.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'websocket.dart'; // Import the WebSocketService
 
@@ -7,28 +10,31 @@ class WebRTCService {
   late RTCPeerConnection _peerConnection;
   late MediaStream _localStream;
   final WebSocketService _webSocketService;
+  final container = ProviderContainer();
 
   WebRTCService(this._webSocketService);
 
   // Initialize the renderers, peer connection, and WebSocket
   Future<void> initialize() async {
+    final userInfo = container.read(userProvider);
     _localRenderer = RTCVideoRenderer();
     _remoteRenderer = RTCVideoRenderer();
     await _localRenderer.initialize();
     await _remoteRenderer.initialize();
-    await _getUserMedia();
     await _createPeerConnection();
     _setupWebSocketListeners();
   }
 
   // Get media stream (camera and microphone)
-  Future<void> _getUserMedia() async {
-    final mediaConstraints = {
-      'audio': true,
-      'video': {'facingMode': 'user'},
-    };
+  Future<MediaStream> _getUserMedia() async {
+    final needVideo =
+        container.read(userProvider)!.userType == UserType.volunteer
+            ? false
+            : {'facingMode': 'environment'};
+
+    final mediaConstraints = {'audio': true, 'video': needVideo};
     _localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-    _localRenderer.srcObject = _localStream;
+    return _localStream;
   }
 
   // Create peer connection
@@ -39,9 +45,9 @@ class WebRTCService {
       ],
       'sdpSemantics': 'unified-plan',
     });
-
+    final localStream = await _getUserMedia();
     for (var track in _localStream.getTracks()) {
-      _peerConnection.addTrack(track, _localStream);
+      _peerConnection.addTrack(track, localStream);
     }
 
     _peerConnection.onIceCandidate = (candidate) {
@@ -54,7 +60,11 @@ class WebRTCService {
     _peerConnection.onTrack = (event) {
       print('Received remote track');
       if (event.streams.isNotEmpty) {
-        _remoteRenderer.srcObject = event.streams[0];
+        // Filter only video tracks
+        final audioTracks = event.streams[0].getAudioTracks();
+        if (audioTracks.isNotEmpty) {
+          _remoteRenderer.srcObject = event.streams[0];
+        }
       }
     };
   }

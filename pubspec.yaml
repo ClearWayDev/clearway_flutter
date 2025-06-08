@@ -55,7 +55,6 @@ dependencies:
   google_fonts: ^6.2.1
   uuid: ^4.5.1
   geolocator: ^14.0.1
-  flutter_background_service: ^5.1.0
   connectivity_plus: ^6.1.4
   top_snackbar_flutter: ^3.3.0
 dev_dependencies:

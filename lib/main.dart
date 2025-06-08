@@ -5,7 +5,6 @@ import 'package:firebase_core/firebase_core.dart';
 import '../firebase/firebase_options.dart';
 
 import './components/backendUrlWidget.dart';
-import 'package:clearway/components/persistentbackgroundjob.dart';
 
 import 'package:clearway/providers/fcm_token_state.dart';
 import 'package:clearway/routes.dart';
@@ -13,7 +12,6 @@ import 'package:clearway/routes.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _initializeFirebase();
-  await initializeBackgroundService();
   runApp(const ProviderScope(child: MyApp()));
 }
 

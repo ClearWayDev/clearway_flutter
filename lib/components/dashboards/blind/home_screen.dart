@@ -1,3 +1,4 @@
+import 'package:clearway/components/dashboards/blind/video_screen.dart';
 import 'package:clearway/services/imagedescription.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,18 +6,23 @@ import 'package:clearway/constants/tts_messages.dart';
 
 class BlindHomeScreen extends ConsumerStatefulWidget {
   const BlindHomeScreen({super.key});
-  
+
   @override
   ConsumerState<BlindHomeScreen> createState() => _BlindHomeScreenState();
 }
 
 class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
-      final ImageDescriptionService _imageDescriptionService = ImageDescriptionService();
+  final ImageDescriptionService _imageDescriptionService =
+      ImageDescriptionService();
 
   int _tapCount = 0;
   DateTime? _lastTapTime;
-  static const Duration _tapTimeWindow = Duration(milliseconds: 500); // Time window for detecting multiple taps
-  static const Duration _processingDelay = Duration(milliseconds: 1000); // Delay before processing taps
+  static const Duration _tapTimeWindow = Duration(
+    milliseconds: 500,
+  ); // Time window for detecting multiple taps
+  static const Duration _processingDelay = Duration(
+    milliseconds: 1000,
+  ); // Delay before processing taps
 
   @override
   void initState() {
@@ -30,19 +36,21 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
   void _handleTap() async {
     await _imageDescriptionService.stopSpeak();
     final now = DateTime.now();
-    
+
     // Reset tap count if too much time has passed since last tap
-    if (_lastTapTime != null && now.difference(_lastTapTime!) > _tapTimeWindow) {
+    if (_lastTapTime != null &&
+        now.difference(_lastTapTime!) > _tapTimeWindow) {
       _tapCount = 0;
     }
-    
+
     _tapCount++;
     _lastTapTime = now;
-    
+
     // Cancel any existing timer and start a new one
     Future.delayed(_processingDelay, () {
       // Only process if this is still the latest tap sequence
-      if (_lastTapTime != null && now.difference(_lastTapTime!) <= _processingDelay) {
+      if (_lastTapTime != null &&
+          now.difference(_lastTapTime!) <= _processingDelay) {
         _processTaps();
       }
     });
@@ -60,45 +68,46 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
         _handleInvalidTap();
         break;
     }
-    
+
     // Reset tap count after processing
     _tapCount = 0;
     _lastTapTime = null;
   }
 
-void _handleDoubleTap() async {
-  await _imageDescriptionService.speak("AI assistance activated.");
-  
-  await _imageDescriptionService.stopSpeak();
-  await Future.delayed(const Duration(seconds: 1));
+  void _handleDoubleTap() async {
+    await _imageDescriptionService.speak("AI assistance activated.");
 
-  await _imageDescriptionService.speak("Capturing surroundings");
-
-  final description = await _imageDescriptionService.captureDescribeSpeak();
-
-  if (description == null) {
     await _imageDescriptionService.stopSpeak();
     await Future.delayed(const Duration(seconds: 1));
-    _imageDescriptionService.speak("Capture stopped or failed. Try again.");
-  } else {
-    // Already spoken in captureDescribeSpeak()
-    print("AI Description: $description");
+
+    await _imageDescriptionService.speak("Capturing surroundings");
+
+    final description = await _imageDescriptionService.captureDescribeSpeak();
+
+    if (description == null) {
+      await _imageDescriptionService.stopSpeak();
+      await Future.delayed(const Duration(seconds: 1));
+      _imageDescriptionService.speak("Capture stopped or failed. Try again.");
+    } else {
+      // Already spoken in captureDescribeSpeak()
+      print("AI Description: $description");
+    }
   }
-}
 
   void _handleTripleTap() {
-    // Video call functionality
     _imageDescriptionService.speak("Video call feature activated.");
-    // _triggerVideoCall();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const BlindVideoCallScreen()),
+    );
   }
 
   void _handleInvalidTap() {
     // Invalid tap count - provide guidance
     _imageDescriptionService.speak(
-      "Invalid input detected. Please tap twice for AI assistance or three times for video call feature. Try again."
+      "Invalid input detected. Please tap twice for AI assistance or three times for video call feature. Try again.",
     );
   }
-
 
   @override
   Widget build(BuildContext context) {

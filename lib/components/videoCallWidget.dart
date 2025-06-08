@@ -40,15 +40,6 @@ class _VideoCallWidgetState extends State<VideoCallWidget> {
       appBar: AppBar(title: const Text('Video call')),
       body: Column(
         children: [
-          Expanded(child: BackendUrlWidget()),
-          Expanded(
-            child: Column(
-              children: [
-                const Text('Local', style: TextStyle(fontSize: 16)),
-                Expanded(child: RTCVideoView(_webrtcService.localRenderer)),
-              ],
-            ),
-          ),
           Expanded(
             child: Column(
               children: [
