@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:clearway/services/imagedescription.dart';
 import 'package:clearway/constants/tts_messages.dart';
-
+// import 'package:flutter/foundation.dart';
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -104,9 +104,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
+                    // if (kIsWeb) {
+                    // Navigator.pushNamed(context, '/signin');
+                    // }
                     ImageDescriptionService().stopSpeak();
                     Future.delayed(const Duration(milliseconds: 500), () {
-                    Navigator.pushNamed(context, '/signin');
+                    Navigator.pushNamed(context, '/access-media');
                     });
                   },
                   style: ElevatedButton.styleFrom(

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:clearway/services/imagedescription.dart';
 import 'package:clearway/constants/tts_messages.dart';
 import 'package:clearway/providers/user_state.dart';
 import 'package:clearway/services/authservice.dart';
+import 'package:clearway/widgets/location_picker.dart';
 
 class BlindProfileScreen extends ConsumerStatefulWidget {
   const BlindProfileScreen({super.key});
@@ -19,7 +22,16 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
   bool _editing = false;
   bool _loading = true;
   bool _saving = false;
-  bool _keyboardVisible = false; // Track keyboard visibility
+  bool _keyboardVisible = false;
+  
+  // Location related variables
+  bool _editingLocation = false;
+  bool _savingLocation = false;
+  LatLng? _selectedLocation;
+  LatLng? _originalLocation;
+  String _locationText = 'Enter a familiar location for guidance.';
+  bool _showLocationPicker = false;
+  String? _locationValidationError;
 
   final _usernameController = TextEditingController();
   final _usernameFocusNode = FocusNode();
@@ -50,6 +62,15 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
             _email = data['email'] ?? '';
             _role = data['userType'].toString().split('.').last;
             _usernameController.text = _username;
+            
+            // Load location data if exists
+            if (data['location'] != null) {
+                _selectedLocation = data['location'] as LatLng;
+                _originalLocation = _selectedLocation;
+                  _locationText = 'Lat: ${_selectedLocation!.latitude.toStringAsFixed(4)}, '
+                 'Lng: ${_selectedLocation!.longitude.toStringAsFixed(4)}';
+            }
+            
             _loading = false;
           });
         } else {
@@ -137,6 +158,103 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
     }
   }
 
+  // Location related methods
+  void _enableLocationEdit() async {
+    setState(() {
+      _editingLocation = true;
+      _locationValidationError = null;
+    });
+    await _imageDescriptionService.stopSpeak();
+    await Future.delayed(const Duration(milliseconds: 400));
+    _imageDescriptionService.speak("Location editing enabled. Tap to select a new location.");
+  }
+
+  void _cancelLocationEdit() {
+    setState(() {
+      _editingLocation = false;
+      _selectedLocation = _originalLocation;
+      if (_originalLocation != null) {
+        _locationText = 'Lat: ${_originalLocation!.latitude.toStringAsFixed(4)}, '
+                       'Lng: ${_originalLocation!.longitude.toStringAsFixed(4)}';
+      } else {
+        _locationText = 'Enter a familiar location for guidance.';
+      }
+      _locationValidationError = null;
+    });
+    _imageDescriptionService.speak("Location editing cancelled.");
+  }
+
+  void _saveLocation() async {
+    if (_selectedLocation == null) {
+      setState(() {
+        _locationValidationError = "Please select a location.";
+      });
+      _imageDescriptionService.speak("Please select a location first.");
+      return;
+    }
+
+    // Check if location actually changed
+    if (_originalLocation != null && 
+        _selectedLocation!.latitude == _originalLocation!.latitude &&
+        _selectedLocation!.longitude == _originalLocation!.longitude) {
+      setState(() => _editingLocation = false);
+      _imageDescriptionService.speak("No changes made to location");
+      return;
+    }
+
+    setState(() => _savingLocation = true);
+
+    final uid = ref.read(userProvider)?.uid;
+    if (uid != null) {
+      try {
+        final success = await _authService.updateUserLocation(uid, _selectedLocation);
+        if (success) {
+          setState(() {
+            _originalLocation = _selectedLocation;
+            _editingLocation = false;
+            _savingLocation = false;
+            _locationValidationError = null;
+          });
+          _imageDescriptionService.speak("Location updated successfully");
+        } else {
+          setState(() => _savingLocation = false);
+          _imageDescriptionService.speak("Failed to update location. Please try again.");
+        }
+      } catch (e) {
+        setState(() => _savingLocation = false);
+        _imageDescriptionService.speak("Error updating location. Please try again.");
+      }
+    } else {
+      setState(() => _savingLocation = false);
+      _imageDescriptionService.speak("Error: User not found. Please try again.");
+    }
+  }
+
+  void _openLocationPicker() {
+    if (!_editingLocation) return;
+    
+    setState(() {
+      _showLocationPicker = true;
+    });
+  }
+
+  void _closeLocationPicker() {
+    setState(() {
+      _showLocationPicker = false;
+    });
+  }
+
+  void _onLocationSelected(LatLng location) {
+    setState(() {
+      _selectedLocation = location;
+      _locationText = 'Lat: ${location.latitude.toStringAsFixed(4)}, '
+                      'Lng: ${location.longitude.toStringAsFixed(4)}';
+      _showLocationPicker = false;
+      _locationValidationError = null;
+    });
+    _imageDescriptionService.speak("Location selected: ${_locationText}");
+  }
+
   void _logout() async {
     _imageDescriptionService.stopSpeak();
     await _authService.signOut();
@@ -148,7 +266,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
 
   void _navigateToHome() {
     // Only navigate if not editing and keyboard is not visible
-    if (!_editing && !_keyboardVisible) {
+    if (!_editing && !_keyboardVisible && !_editingLocation && !_showLocationPicker) {
       _imageDescriptionService.stopSpeak();
       Future.delayed(const Duration(milliseconds: 500), () {
         Navigator.pushReplacementNamed(context, '/dashboard/blind/home');
@@ -170,7 +288,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
               children: [
                 Column(
                   children: [
-                    // Top Half: Profile content - Use Flexible instead of Expanded
+                    // Top Half: Profile content
                     Flexible(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
@@ -182,6 +300,8 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 16),
+                            
+                            // Username Field
                             TextField(
                               controller: _usernameController,
                               focusNode: _usernameFocusNode,
@@ -228,6 +348,8 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                               onSubmitted: _editing ? (_) => _saveUsername() : null,
                             ),
                             const SizedBox(height: 12),
+                            
+                            // Email Field
                             TextField(
                               controller: TextEditingController(text: _email),
                               enabled: false,
@@ -241,6 +363,8 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
+                            
+                            // Role Field
                             TextField(
                               controller: TextEditingController(text: _role),
                               enabled: false,
@@ -253,7 +377,110 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                                 fillColor: Colors.grey.shade100,
                               ),
                             ),
+                            const SizedBox(height: 16),
+                            
+                            // Location Selection for Blind Users
+                            Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: _locationValidationError != null
+                                      ? Colors.red
+                                      : Colors.grey.shade300
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: InkWell(
+                                onTap: _editingLocation ? _openLocationPicker : null,
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.location_on,
+                                        color: _selectedLocation != null ? Colors.teal : Colors.grey,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Location',
+                                              style: GoogleFonts.urbanist(
+                                                fontSize: 12,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              _locationText,
+                                              style: GoogleFonts.urbanist(
+                                                fontSize: 14,
+                                                color: _selectedLocation != null
+                                                    ? Colors.black
+                                                    : Colors.grey.shade500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (_savingLocation)
+                                        const Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                          ),
+                                        )
+                                      else if (_editingLocation)
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.check, color: Colors.green),
+                                              onPressed: _saveLocation,
+                                              tooltip: 'Save location',
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.close, color: Colors.red),
+                                              onPressed: _cancelLocationEdit,
+                                              tooltip: 'Cancel editing',
+                                            ),
+                                          ],
+                                        )
+                                      else
+                                        IconButton(
+                                          icon: const Icon(Icons.edit),
+                                          onPressed: _enableLocationEdit,
+                                          tooltip: 'Edit location',
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            
+                            // Location Validation Error
+                            if (_locationValidationError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8, left: 16),
+                                child: Text(
+                                  _locationValidationError!,
+                                  style: const TextStyle(
+                                    fontFamily: 'Urbanist',
+                                    fontSize: 12,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ),
+                            
                             const SizedBox(height: 20),
+                            
+                            // Action Buttons
                             Row(
                               children: [
                                 Expanded(
@@ -279,6 +506,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                                 ),
                               ],
                             ),
+                            
                             // Add extra space when keyboard is visible
                             if (_keyboardVisible) const SizedBox(height: 100),
                           ],
@@ -288,25 +516,25 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                   ],
                 ),
                 
-                // Bottom navigation area - positioned absolutely
+                // Bottom navigation area
                 Positioned(
                   bottom: 0,
                   left: 0,
                   right: 0,
                   child: IgnorePointer(
-                    ignoring: _editing || _keyboardVisible, // Disable when editing or keyboard visible
+                    ignoring: _editing || _keyboardVisible || _editingLocation || _showLocationPicker,
                     child: GestureDetector(
                       onTap: _navigateToHome,
                       child: Container(
                         width: double.infinity,
                         height: MediaQuery.of(context).size.height * 0.4,
-                        color: (_editing || _keyboardVisible) 
-                            ? Colors.transparent // Make transparent when disabled
+                        color: (_editing || _keyboardVisible || _editingLocation || _showLocationPicker) 
+                            ? Colors.transparent
                             : Colors.grey.shade200,
                         child: Center(
                           child: Text(
-                            (_editing || _keyboardVisible)
-                                ? '' // Hide text when editing
+                            (_editing || _keyboardVisible || _editingLocation || _showLocationPicker)
+                                ? ''
                                 : 'Tap here to return to Home',
                             style: const TextStyle(fontSize: 20, color: Colors.black54),
                           ),
@@ -315,6 +543,14 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                     ),
                   ),
                 ),
+                
+                // Location Picker Overlay
+                if (_showLocationPicker)
+                  LocationPickerOverlay(
+                    initialLocation: _selectedLocation,
+                    onLocationSelected: _onLocationSelected,
+                    onClose: _closeLocationPicker,
+                  ),
               ],
             ),
     );

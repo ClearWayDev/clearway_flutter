@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:clearway/widgets/draggable_map_popup.dart';
+import 'package:clearway/providers/user_state.dart';
 
 class GpsTrackingScreen extends ConsumerStatefulWidget {
   const GpsTrackingScreen({super.key});
@@ -39,6 +40,7 @@ class _GpsTrackingScreenState extends ConsumerState<GpsTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final token = ref.watch(userProvider)?.fcmToken;
     return Scaffold(
       appBar: AppBar(
         title: const Text('GPS Tracking'),
@@ -54,17 +56,17 @@ class _GpsTrackingScreenState extends ConsumerState<GpsTrackingScreen> {
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.gps_fixed, size: 80, color: Colors.blue),
-                SizedBox(height: 20),
-                Text(
+              children: [
+                const Icon(Icons.gps_fixed, size: 80, color: Colors.blue),
+                const SizedBox(height: 20),
+                const Text(
                   'GPS Tracking Active',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Text(
-                  'Tap the map icon to view navigation',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  'FCM TOKEN : $token',
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
               ],
             ),
