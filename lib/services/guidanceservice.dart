@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 
 class GuidanceService {
-  final String _googleApiKey = 'AIzaSyBtj3-pCFeJi3gG3NIl2ZOtls9w1M7T06I';
+  final String _googleApiKey = 'AIzaSyC54BC8i82O4rPnSTp7j2h36kjteHbUmZ0';
 
   Future<String> getGuidance(String destinationPlaceName) async {
     try {
