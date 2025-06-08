@@ -47,7 +47,7 @@ class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
   UserType? _accountType;
 
   void _nextStep() {
-    if (_currentStep < 3) {
+    if (_currentStep < 2) {
       setState(() => _currentStep++);
     }
   }
@@ -134,7 +134,7 @@ void _validateform() {
       ref.read(userProvider.notifier).setUser(user);
       showTopSnackBar(context, 'User registered successfully!', type: TopSnackBarType.success);
       // Navigate to next step
-        _nextStep();
+        _dashboardAccess();
     }
   } on FirebaseAuthException catch (e) {
     final message = getFirebaseAuthErrorMessage(e);
@@ -145,7 +145,7 @@ void _validateform() {
     setState(() => _isLoading = false);
   }
 }
-Future<void> _hardwareAccess() async {
+Future<void> _dashboardAccess() async {
       final authState = ref.watch(authStateProvider).value;
       final userState = ref.watch(userProvider);
   if (authState != null) {
@@ -171,7 +171,6 @@ Future<void> _hardwareAccess() async {
             _buildAccountTypeStep(),
             _buildSignupFormStep(),
             _buildPrivacyStep(),
-            _buildMediaAccessStep(),
           ],
         ),
       ),
@@ -571,291 +570,211 @@ Widget _buildSignupFormStep() => Stack(
       ],
     );
 
-  Widget _buildPrivacyStep() => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
+  Widget _buildPrivacyStep() => GestureDetector(
+      // Add this to dismiss keyboard when tapping anywhere
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
 
-            // Back Button (top-left)
-            Align(
-              alignment: Alignment.topLeft,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _previousStep,
+              // Back Button (top-left)
+              Align(
+                alignment: Alignment.topLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    // Dismiss keyboard before navigating back
+                    FocusScope.of(context).unfocus();
+                    _previousStep();
+                  },
+                ),
               ),
-            ),
 
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
 
-            // Title
-            Text(
-              'Privacy & Terms',
-              style: GoogleFonts.urbanist(
-                fontSize: 30,
-                fontWeight: FontWeight.w700,
-                height: 1.3,
-                letterSpacing: -0.01,
-                color: const Color(0xFF1E232C),
-                shadows: const [
-                  Shadow(
-                    offset: Offset(0, 2),
-                    blurRadius: 4,
-                    color: Color(0x40000000),
+              // Title
+              Text(
+                'Privacy & Terms',
+                style: GoogleFonts.urbanist(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                  letterSpacing: -0.01,
+                  color: const Color(0xFF1E232C),
+                  shadows: const [
+                    Shadow(
+                      offset: Offset(0, 2),
+                      blurRadius: 4,
+                      color: Color(0x40000000),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Intro text
+              const Text(
+                'To use ClearWay, you agree to the following,',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image.asset(
+                    'assets/icon/camera-icon.png',
+                    width: 40,
+                    height: 40,
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'ClearWay can record, review, and share videos and images for safety, quality, and as further described in the Privacy Policy.',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 13,
+                        height: 1.5,
+                        color: Color(0xFF4F5D73),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
-            // Intro text
-            const Text(
-              'To use ClearWay, you agree to the following,',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w400,
-                fontSize: 13,
-                height: 1.5,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Image.asset(
-                  'assets/icon/camera-icon.png',
-                  width: 40,
-                  height: 40,
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'ClearWay can record, review, and share videos and images for safety, quality, and as further described in the Privacy Policy.',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 13,
-                      height: 1.5,
-                      color: Color(0xFF4F5D73),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            // Terms & Privacy Buttons in column
-            Column(
-              children: [
-                SizedBox(
-                  height: 56,
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.black),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: () {
-                      FocusScope.of(context).unfocus();
-                        showPolicyPopup(
-                        context: context,
-                        title: 'Terms of Service',
-                        content: termsOfService,
-                      );
-                      },
-                    child: const Text(
-                      'Terms of Service',
-                      style: TextStyle(
-                        color: Color(0xFF1E232C),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 56,
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.black),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: () {
-                      FocusScope.of(context).unfocus();
-                        showPolicyPopup(
-                        context: context,
-                        title: 'Privacy Policy',
-                        content: privacyPolicy,
-                      );
-                      },
-                    child: const Text(
-                      'Privacy Policy',
-                      style: TextStyle(
-                        color: Color(0xFF1E232C),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const Spacer(),
-
-            // Disclaimer text above button
-            const Text(
-              'By clicking "I agree", I agree to everything above and accept the Terms of Service and Privacy Policy.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w400,
-                fontSize: 13,
-                height: 1.5,
-                color: Color(0xFF2E2E43),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // I Agree button
-            SizedBox(
-              width: 331,
-              height: 56,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E232C),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: _isLoading ? null : _register,
-                child: const Text(
-                  'I Agree',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-
-
-Widget _buildMediaAccessStep() => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          children: [
-            // Back button
-            Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: _previousStep,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Title
-             Text(
-                        'Hardware Access',
-                        style: GoogleFonts.urbanist(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w700,
-                          height: 1.3,
-                          letterSpacing: -0.01,
-                          color: const Color(0xFF1E232C),
-                          shadows: const [
-                            Shadow(
-                              offset: Offset(0, 2),
-                              blurRadius: 4,
-                              color: Color(0x40000000),
-                            ),
-                          ],
+              // Terms & Privacy Buttons in column
+              Column(
+                children: [
+                  SizedBox(
+                    height: 56,
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.black),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-
-            const Spacer(),
-
-            // Image
-            Center(
-              child: Image.asset(
-                'assets/image/app-permission.png',
-                width: 204,
-                height: 280,
+                      onPressed: () {
+                        // Ensure keyboard is dismissed before showing popup
+                        FocusScope.of(context).unfocus();
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          showPolicyPopup(
+                            context: context,
+                            title: 'Terms of Service',
+                            content: termsOfService,
+                          );
+                        });
+                      },
+                      child: const Text(
+                        'Terms of Service',
+                        style: TextStyle(
+                          color: Color(0xFF1E232C),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 56,
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.black),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () {
+                        // Ensure keyboard is dismissed before showing popup
+                        FocusScope.of(context).unfocus();
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          showPolicyPopup(
+                            context: context,
+                            title: 'Privacy Policy',
+                            content: privacyPolicy,
+                          );
+                        });
+                      },
+                      child: const Text(
+                        'Privacy Policy',
+                        style: TextStyle(
+                          color: Color(0xFF1E232C),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
 
-            const SizedBox(height: 24),
+              const Spacer(),
 
-            // Subheading
-            const Text(
-              'Microphone, Camera & Bluetooth',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
+              // Disclaimer text above button
+              const Text(
+                'By clicking "I agree", I agree to everything above and accept the Terms of Service and Privacy Policy.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 13,
+                  height: 1.5,
+                  color: Color(0xFF2E2E43),
+                ),
+              ),
 
-            // Description
-            const Text(
-              'To make video calls, give access to your microphone & camera. To use Bluetooth devices, please give access to Bluetooth.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
-            ),
+              const SizedBox(height: 16),
 
-            const Spacer(),
-
-            // Give Access Button
-            SizedBox(
-              width: 331,
-              height: 56,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+              // I Agree button
+              SizedBox(
+                width: 331,
+                height: 56,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E232C),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: _isLoading ? null : () {
+                    // Dismiss keyboard before registering
+                    FocusScope.of(context).unfocus();
+                    _register();
+                  },
+                  child: const Text(
+                    'I Agree',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      fontFamily: 'Poppins',
+                    ),
                   ),
                 ),
-                onPressed: _isLoading ? null : _hardwareAccess,
-                child: const Text(
-                  'Give Access',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
               ),
-            ),
 
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

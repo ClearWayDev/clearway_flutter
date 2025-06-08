@@ -33,4 +33,8 @@ class TtsMessages {
 
   static const loggedOut = 
     "You have been logged out.";
+
+  static const accessMediaScreen = 
+    "You are now on media access screen. "
+    "To make video calls, give access to your microphone & camera. To use location services, please give access to location.";
 }
