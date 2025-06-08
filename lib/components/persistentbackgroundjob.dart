@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void startBackgroundService() {
   final service = FlutterBackgroundService();
@@ -67,11 +68,25 @@ Future<void> initializeBackgroundService() async {
   service.startService();
 }
 
-void startBackgroundConnection() {
+Future<void> startBackgroundConnection() async {
   final websocket = WebSocketService.getInstance();
   final userInfo = ProviderContainer().read(userProvider);
   print("Starting background connection...");
   print("Websocket server URL: ${websocket.socket.io.uri}");
+
+  // Check and request location permissions
+  if (await Permission.location.isDenied ||
+      await Permission.location.isPermanentlyDenied) {
+    print("Requesting location permissions...");
+    final status = await Permission.location.request();
+    if (!status.isGranted) {
+      print(
+        "Location permissions denied. Background connection cannot proceed.",
+      );
+      return;
+    }
+  }
+
   Connectivity().onConnectivityChanged.listen((results) {
     if (results.contains(ConnectivityResult.wifi) ||
         results.contains(ConnectivityResult.mobile)) {

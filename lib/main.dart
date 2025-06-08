@@ -12,12 +12,13 @@ import 'package:clearway/routes.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Start the background service
+  await _initializeFirebase();
   await initializeBackgroundService();
-
   runApp(const ProviderScope(child: MyApp()));
+}
+
+Future<void> _initializeFirebase() async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 }
 
 class MyApp extends ConsumerWidget {
