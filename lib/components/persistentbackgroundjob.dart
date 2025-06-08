@@ -116,15 +116,13 @@ Future<void> startBackgroundConnection() async {
     );
   });
 
-  if (userInfo!.userType == UserType.blind) {
-    Geolocator.getPositionStream().listen((Position position) {
-      websocket.socket.emit('location-report', {
-        'latitude': position.latitude,
-        'longitude': position.longitude,
-        'UId': userInfo.uid,
-      });
+  Geolocator.getPositionStream().listen((Position position) {
+    websocket.socket.emit('location-report', {
+      'latitude': position.latitude,
+      'longitude': position.longitude,
+      'UId': userInfo!.uid,
     });
-  }
+  });
 }
 
 @pragma('vm:entry-point')
