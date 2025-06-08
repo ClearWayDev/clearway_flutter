@@ -4,6 +4,7 @@ import 'package:clearway/components/triggercall.dart';
 import 'package:clearway/models/user.dart';
 import 'package:clearway/providers/user_state.dart';
 import 'package:clearway/services/websocket.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -20,6 +21,26 @@ void stopBackgroundService() {
 }
 
 Future<void> initializeBackgroundService() async {
+  const notificationChannelId = 'my_foreground';
+  const notificationId = 888;
+
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    notificationChannelId, // id
+    'ClearWay', // title
+    description:
+        'This channel is used for persistant notifications.', // description
+    importance: Importance.high, // importance must be at low or higher level
+  );
+
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(channel);
+
   final service = FlutterBackgroundService();
 
   await service.configure(
@@ -30,8 +51,10 @@ Future<void> initializeBackgroundService() async {
       onStart: onStart,
       isForegroundMode: true,
       autoStartOnBoot: true,
+      notificationChannelId: notificationChannelId,
       initialNotificationContent: "ClearWay app is running",
       initialNotificationTitle: "ClearWay",
+      foregroundServiceNotificationId: notificationId,
       foregroundServiceTypes: [
         AndroidForegroundType.location,
         AndroidForegroundType.dataSync,

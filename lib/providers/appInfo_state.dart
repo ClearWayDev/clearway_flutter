@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/appInfo.dart';
 
 class AppInfoState extends StateNotifier<AppInfo?> {
-  AppInfoState() : super(AppInfo(backendUrl: 'http://localhost:6699'));
+  AppInfoState() : super(AppInfo(backendUrl: 'https://api.clearway.live/'));
 
   void setInfo(AppInfo appInfo) {
     state = appInfo;
