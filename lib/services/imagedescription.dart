@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:camera/camera.dart';
+import 'package:clearway/services/guidanceservice.dart';
 import 'package:flutter/foundation.dart'; // for kIsWeb
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
@@ -8,7 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 class ImageDescriptionService {
   final FlutterTts _flutterTts = FlutterTts();
-  final String _geminiApiKey = "AIzaSyBoGLXppwecH6WXz75fmc0w0YwiqIxsw_k";
+  final String _geminiApiKey = "AIzaSyBfWeyZMt_PkE_JYTXzNtyGqWC3ttTXWag";
 
   bool _isLooping = false;
   bool _stopRequested = false;
@@ -144,10 +145,12 @@ class ImageDescriptionService {
       if (photo == null) break;
 
       final compressedBytes = await compressImage(photo);
-      final description = await describeImage(compressedBytes);
-      lastDescription = description;
+      final imageDescriptionText = await describeImage(compressedBytes);
+      final guidanceService = GuidanceService();
+      final guidance = await guidanceService.getGuidance("Galle fort"); //todo : need to fetch destination from saved locartion
 
-      await speak(description);
+      final combinedText = "$imageDescriptionText. $guidance";
+      await speak(combinedText);
 
       if (_stopRequested) break;
 
