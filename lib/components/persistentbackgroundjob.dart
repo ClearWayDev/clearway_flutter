@@ -4,13 +4,14 @@ import 'package:clearway/components/triggercall.dart';
 import 'package:clearway/models/user.dart';
 import 'package:clearway/providers/user_state.dart';
 import 'package:clearway/services/authservice.dart';
-import 'package:clearway/services/websocket.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 void stopBackgroundService() {
   final service = FlutterBackgroundService();
@@ -18,6 +19,8 @@ void stopBackgroundService() {
 }
 
 Future<void> initializeBackgroundService() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure initialized synchronously
+
   final service = FlutterBackgroundService();
   // Ensure the service is not already running
   final isRunning = await service.isRunning();
@@ -25,7 +28,7 @@ Future<void> initializeBackgroundService() async {
     print("Background service is already running.");
     return;
   }
-  print("Initializing background service...");
+  print("nww Initializing background service...");
   const notificationChannelId = 'my_foreground';
   const notificationId = 888;
 
@@ -39,19 +42,6 @@ Future<void> initializeBackgroundService() async {
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-
-  // Request notification permissions
-  if (await Permission.notification.isDenied ||
-      await Permission.notification.isPermanentlyDenied) {
-    print("Requesting notification permissions...");
-    final status = await Permission.notification.request();
-    if (!status.isGranted) {
-      print(
-        "Notification permissions denied. Background service cannot proceed.",
-      );
-      return;
-    }
-  }
 
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
@@ -83,34 +73,27 @@ Future<void> initializeBackgroundService() async {
 }
 
 Future<void> startBackgroundConnection() async {
-  final websocket = WebSocketService.getInstance();
-  final userInfo = ProviderContainer().read(userProvider);
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure initialized synchronously
+
+  // Do not request permissions here; ensure permissions are granted beforehand
+  final socket = IO.io("https://api.clearway.live/", <String, dynamic>{
+    'transports': ['websocket'],
+    'autoConnect': true,
+  });
   print("Starting background connection...");
-  print("Websocket server URL: ${websocket.socket.io.uri}");
+  print("Websocket server URL: ${socket.io.uri}");
 
-  // Check and request location permissions
-  if (await Permission.location.isDenied ||
-      await Permission.location.isPermanentlyDenied) {
-    print("Requesting location permissions...");
-    final status = await Permission.location.request();
-    if (!status.isGranted) {
-      print(
-        "Location permissions denied. Background connection cannot proceed.",
-      );
-      return;
-    }
-  }
-
-  Connectivity().onConnectivityChanged.listen((results) {
-    if (results.contains(ConnectivityResult.wifi) ||
-        results.contains(ConnectivityResult.mobile)) {
-      websocket.socket.connect();
-    } else if (results.contains(ConnectivityResult.none)) {
-      websocket.disconnect();
-    }
+  socket.emit('test-connection', {
+    'message': 'Testing connection from background service',
+    'timestamp': DateTime.now().toIso8601String(),
   });
 
-  websocket.socket.on('call-from-blind', (data) {
+  socket.onConnect((_) {
+    print("WebSocket connected. Emitting location-report...");
+    socket.emit('location-report', {'tst': "tst", 'stst': "tst", 'tst': "tst"});
+  });
+
+  socket.on('call-from-blind', (data) {
     TriggerCall.handleIncomingCall(
       data['myUId'] as String,
       data['destUId'] as String,
@@ -119,33 +102,31 @@ Future<void> startBackgroundConnection() async {
 
   AuthService authService = new AuthService();
   final userInfoFirebase = await authService.getCurrentUserData();
+  print(userInfoFirebase);
+  if (userInfoFirebase != null) {
+    Geolocator.getCurrentPosition().then((Position position) {
+      socket.emit('location-report', {
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'UId': userInfoFirebase.uid,
+      });
+    });
 
-  if (await Permission.location.isDenied ||
-      await Permission.location.isPermanentlyDenied) {
-    print("Requesting location permissions...");
-    final status = await Permission.location.request();
-  } else {
-    if (userInfoFirebase != null) {
-      Geolocator.getCurrentPosition().then((Position position) {
-        websocket.socket.emit('location-report', {
-          'latitude': position.latitude,
-          'longitude': position.longitude,
-          'UId': userInfoFirebase.uid,
-        });
+    Geolocator.getPositionStream().listen((Position position) {
+      socket.emit('location-report', {
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'UId': userInfoFirebase.uid,
       });
-      Geolocator.getPositionStream().listen((Position position) {
-        websocket.socket.emit('location-report', {
-          'latitude': position.latitude,
-          'longitude': position.longitude,
-          'UId': userInfoFirebase.uid,
-        });
-      });
-    }
+    });
   }
 }
 
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure initialized synchronously
+
+  // Do not request permissions here; ensure permissions are granted beforehand
   print("Background service started"); // Add print statement for debugging
   startBackgroundConnection();
 
