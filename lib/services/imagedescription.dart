@@ -6,10 +6,11 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image/image.dart' as img;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ImageDescriptionService {
   final FlutterTts _flutterTts = FlutterTts();
-  final String _geminiApiKey = "AIzaSyBoGLXppwecH6WXz75fmc0w0YwiqIxsw_k";
+  final String _geminiApiKey = dotenv.env['API_KEY'] ?? '';
 
   bool _isLooping = false;
   bool _stopRequested = false;

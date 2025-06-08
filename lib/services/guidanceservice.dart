@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 class GuidanceService {
-  final String _googleApiKey = 'AIzaSyC54BC8i82O4rPnSTp7j2h36kjteHbUmZ0';
+  final String _googleApiKey = dotenv.env['API_KEY'] ?? '';
 
   Future<String> getGuidance(String destinationPlaceName) async {
     try {
