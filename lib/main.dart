@@ -13,7 +13,7 @@ import 'package:clearway/routes.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await dotenv.load(); // Load environment variables
+  await dotenv.load(fileName: "assets/.env"); // ✅ for Flutter Web compatibility
   runApp(const ProviderScope(child: MyApp()));
 }
 
