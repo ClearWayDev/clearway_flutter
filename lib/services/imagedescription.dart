@@ -104,7 +104,7 @@ class ImageDescriptionService {
       return response.text ?? "No description was generated.";
     } catch (e) {
       print("❌ Gemini failed: $e");
-      return "Error describing the image.";
+      return "Error describing the image. :$e ";
     }
   }
 
