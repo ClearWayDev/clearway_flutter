@@ -11,7 +11,8 @@ import 'package:clearway/routes.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await _initializeFirebase();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await NotificationService().initialize();
   runApp(const ProviderScope(child: MyApp()));
 }
 
