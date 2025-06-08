@@ -5,7 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 class GuidanceService {
-  final String _googleApiKey = dotenv.env['API_KEY'] ?? '';
+  final String _googleApiKey = dotenv.env['DIRECTION_KEY'] ?? '';
 
   Future<String> getGuidance(String destinationPlaceName) async {
     try {
