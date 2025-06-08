@@ -32,7 +32,7 @@ class GuideHomeScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 32),
                 child: Text(
                   'You’re making a difference by assisting visually impaired users.\n\nStay tuned for assistance requests or video calls.',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: Colors.black54),
                   textAlign: TextAlign.center,
                 ),
               ),

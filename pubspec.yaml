@@ -57,6 +57,7 @@ dependencies:
   geolocator: ^14.0.1
   flutter_background_service: ^5.1.0
   connectivity_plus: ^6.1.4
+  top_snackbar_flutter: ^3.3.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -89,6 +90,7 @@ flutter:
     - assets/image/welcome-image.png
     - assets/image/app-permission.png
     - assets/icon/camera-icon.png
+    - assets/icon/tap_icon.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

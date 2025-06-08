@@ -10,7 +10,7 @@ class TtsMessages {
 
   static const dashboardScreen = 
     "Welcome back to Clearway. You are now on your dashboard. "
-    "Tap the screen once for AI assistance, or tap twice to start a video call. "
+    "Tap the screen twice for AI assistance, or tap three times to start a video call. "
     ;
 
   static const profileScreen = 

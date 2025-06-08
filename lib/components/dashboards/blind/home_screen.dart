@@ -50,11 +50,11 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
 
   void _processTaps() {
     switch (_tapCount) {
-      case 1:
-        _handleSingleTap();
-        break;
       case 2:
         _handleDoubleTap();
+        break;
+      case 3:
+        _handleTripleTap();
         break;
       default:
         _handleInvalidTap();
@@ -66,13 +66,27 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
     _lastTapTime = null;
   }
 
-  void _handleSingleTap() {
-    // AI assistance functionality
-    _imageDescriptionService.speak("AI assistance activated. How can I help you?");
-    // _triggerAIAssistance();
-  }
+void _handleDoubleTap() async {
+  await _imageDescriptionService.speak("AI assistance activated.");
+  
+  await _imageDescriptionService.stopSpeak();
+  await Future.delayed(const Duration(seconds: 1));
 
-  void _handleDoubleTap() {
+  await _imageDescriptionService.speak("Capturing surroundings");
+
+  final description = await _imageDescriptionService.captureDescribeSpeak();
+
+  if (description == null) {
+    await _imageDescriptionService.stopSpeak();
+    await Future.delayed(const Duration(seconds: 1));
+    _imageDescriptionService.speak("Capture stopped or failed. Try again.");
+  } else {
+    // Already spoken in captureDescribeSpeak()
+    print("AI Description: $description");
+  }
+}
+
+  void _handleTripleTap() {
     // Video call functionality
     _imageDescriptionService.speak("Video call feature activated.");
     // _triggerVideoCall();
@@ -81,31 +95,16 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
   void _handleInvalidTap() {
     // Invalid tap count - provide guidance
     _imageDescriptionService.speak(
-      "Invalid input detected. Please tap once for AI assistance or twice for video call feature. Try again."
+      "Invalid input detected. Please tap twice for AI assistance or three times for video call feature. Try again."
     );
   }
 
-  // void _triggerAIAssistance() {
-  //   // TODO: Implement AI assistance logic
-  //   print("AI assistance triggered");
-  //   // Navigate to AI assistance screen or start voice recognition
-  //   // Example:
-  //   // Navigator.pushNamed(context, '/ai-assistance');
-  // }
-
-  // void _triggerVideoCall() {
-  //   // TODO: Implement video call logic
-  //   print("Video call triggered");
-  //   // Navigate to video call screen or start video call
-  //   // Example:
-  //   // Navigator.pushNamed(context, '/video-call');
-  // }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: _handleTap,
-      behavior: HitTestBehavior.opaque, // Ensures entire screen is tappable
+      behavior: HitTestBehavior.opaque,
       child: Container(
         color: Colors.grey.shade300,
         width: double.infinity,
@@ -114,23 +113,18 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
+              GestureDetector(
+                onTap: _handleTap,
+                child: Image.asset(
+                  'assets/icon/tap_icon.png',
+                  width: 120,
+                  height: 120,
                 ),
-                child: const Icon(Icons.mic, color: Colors.white, size: 48),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 36),
               const Text(
-                'Voice Assistant',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Tap once for AI assistance\nTap twice for video call',
-                style: TextStyle(color: Colors.grey),
+                'Tap twice for AI assistance\nTap three times for video call',
+                style: TextStyle(color: Colors.black54, fontSize: 20),
                 textAlign: TextAlign.center,
               ),
             ],

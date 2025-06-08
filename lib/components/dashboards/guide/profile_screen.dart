@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clearway/providers/user_state.dart';
 import 'package:clearway/services/authservice.dart';
+import 'package:clearway/utils/top_snackbar.dart';
 
 class GuideProfileScreen extends ConsumerStatefulWidget {
   const GuideProfileScreen({super.key});
@@ -81,6 +82,7 @@ class _GuideProfileScreenState extends ConsumerState<GuideProfileScreen> {
     final updatedUsername = _usernameController.text.trim();
     
     if (updatedUsername.isEmpty) {
+      showTopSnackBar(context, 'Username cannot be empty', type: TopSnackBarType.info);
       return;
     }
 
@@ -104,10 +106,12 @@ class _GuideProfileScreenState extends ConsumerState<GuideProfileScreen> {
           });
           _usernameFocusNode.unfocus();
           ref.read(userProvider.notifier).updateUsername(updatedUsername);
+          showTopSnackBar(context, 'User updated successfully', type: TopSnackBarType.success);
         } else {
           setState(() => _saving = false);
         }
       } catch (e) {
+        showTopSnackBar(context, 'Error updating username. Please try again', type: TopSnackBarType.error);
         setState(() => _saving = false);
       }
     } else {
@@ -221,7 +225,7 @@ class _GuideProfileScreenState extends ConsumerState<GuideProfileScreen> {
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            Navigator.pushNamed(context, '/forgot-password');
+                            Navigator.pushNamed(context, '/reset-password');
                           },
                           icon: const Icon(Icons.lock_reset),
                           label: const Text('Reset Password'),

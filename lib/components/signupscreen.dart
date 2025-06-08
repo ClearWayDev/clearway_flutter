@@ -1,3 +1,4 @@
+import 'package:clearway/constants/policies.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:clearway/widgets/inputfield.dart';
@@ -12,6 +13,7 @@ import 'package:clearway/models/user.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:clearway/utils/firebase_error.dart';
+import 'package:clearway/utils/top_snackbar.dart';
 
 class SignupFlowScreen extends ConsumerStatefulWidget {
   const SignupFlowScreen({super.key});
@@ -76,19 +78,15 @@ class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
     if (user != null) {
       // Set user info in Riverpod state
       ref.read(userProvider.notifier).setUser(user);
-
+      showTopSnackBar(context, 'User registered successfully!', type: TopSnackBarType.success);
       // Navigate to next step
         _nextStep();
     }
   } on FirebaseAuthException catch (e) {
     final message = getFirebaseAuthErrorMessage(e);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Signup Failed: $message')),
-    );
+    showTopSnackBar(context, 'Signup Failed: $message', type: TopSnackBarType.error);
   } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Signup Failed: ${e.toString()}')),
-    );
+    showTopSnackBar(context, 'Signup Failed: ${e.toString()}', type: TopSnackBarType.error);
   } finally {
     setState(() => _isLoading = false);
   }
@@ -522,10 +520,11 @@ Widget _buildSignupFormStep() => Padding(
                       ),
                     ),
                     onPressed: () {
+                      FocusScope.of(context).unfocus();
                         showPolicyPopup(
                         context: context,
                         title: 'Terms of Service',
-                        content: 'Here you display your Terms of Service content...',
+                        content: termsOfService,
                       );
                       },
                     child: const Text(
@@ -551,10 +550,11 @@ Widget _buildSignupFormStep() => Padding(
                       ),
                     ),
                     onPressed: () {
+                      FocusScope.of(context).unfocus();
                         showPolicyPopup(
                         context: context,
                         title: 'Privacy Policy',
-                        content: 'Here you display privacy policy content...',
+                        content: privacyPolicy,
                       );
                       },
                     child: const Text(

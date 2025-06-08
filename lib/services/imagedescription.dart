@@ -47,7 +47,10 @@ class ImageDescriptionService {
 
     try {
       print('📷 Opening camera...');
-      final image = await _picker.pickImage(source: ImageSource.camera);
+      final image = await _picker.pickImage(
+      source: ImageSource.camera,
+      preferredCameraDevice: CameraDevice.rear, // 💡 this helps guide to back camera
+      );
       print('📥 Image captured: ${image?.path}');
       return image;
     } catch (e) {
