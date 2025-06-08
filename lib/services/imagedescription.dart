@@ -10,7 +10,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ImageDescriptionService {
   final FlutterTts _flutterTts = FlutterTts();
-  final String _geminiApiKey = dotenv.env['API_KEY'] ?? '';
+  // final String _geminiApiKey = dotenv.env['API_KEY'] ?? '';
+  final String _geminiApiKey = "AIzaSyDYSPxTvZQsjES1m-11lotUSXb2eJAK9Vs";
 
   bool _isLooping = false;
   bool _stopRequested = false;
@@ -148,7 +149,9 @@ class ImageDescriptionService {
       final compressedBytes = await compressImage(photo);
       final imageDescriptionText = await describeImage(compressedBytes);
       final guidanceService = GuidanceService();
-      final guidance = await guidanceService.getGuidance("Galle fort"); //todo : need to fetch destination from saved locartion
+      final guidance = await guidanceService.getGuidance(
+        "Galle fort",
+      ); //todo : need to fetch destination from saved locartion
 
       // final combinedText = "$imageDescriptionText. $guidance";
       await speak(guidance);
