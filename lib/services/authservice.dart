@@ -121,7 +121,7 @@ Future<Map<String, dynamic>?> getUserDetails(String uid) async {
   LatLng? location;
 
   // Try to get location document
-  final locationDoc = await _firestore.collection('location').doc(uid).get();
+  final locationDoc = await _firestore.collection('locations').doc(uid).get();
   if (locationDoc.exists) {
     final geo = locationDoc['location'];
     if (geo is GeoPoint) {
@@ -150,6 +150,15 @@ Future<bool> updateUsername(String uid, String newName) async {
     return true;
 }
 
+Future<bool> updateUserLocation(String uid, LatLng? selectedLocation) async {
+  if (selectedLocation == null) return false;
+
+  await _firestore.collection('locations').doc(uid).set({
+    'location': GeoPoint(selectedLocation.latitude, selectedLocation.longitude),
+  });
+
+  return true;
+}
 
   // Sign out
   Future<void> signOut() async {
