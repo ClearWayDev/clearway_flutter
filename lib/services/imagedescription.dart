@@ -5,12 +5,10 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image/image.dart' as img;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 
 class ImageDescriptionService {
   final FlutterTts _flutterTts = FlutterTts();
-  final String _geminiApiKey = dotenv.env['GEMINI_API_KEY']!;
+  final String _geminiApiKey = "AIzaSyBoGLXppwecH6WXz75fmc0w0YwiqIxsw_k";
 
   bool _isLooping = false;
   bool _stopRequested = false;
@@ -30,7 +28,8 @@ class ImageDescriptionService {
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
     final rearCamera = cameras.firstWhere(
-        (camera) => camera.lensDirection == CameraLensDirection.back);
+      (camera) => camera.lensDirection == CameraLensDirection.back,
+    );
     _cameraController = CameraController(
       rearCamera,
       ResolutionPreset.medium,
@@ -50,7 +49,8 @@ class ImageDescriptionService {
     }
 
     try {
-      if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      if (_cameraController == null ||
+          !_cameraController!.value.isInitialized) {
         await _initializeCamera();
       }
 
@@ -88,7 +88,7 @@ class ImageDescriptionService {
     try {
       final response = await model.generateContent([
         Content.multi([
-           TextPart(
+          TextPart(
             "You are assisting a blind person in navigating their environment. "
             "Look at this image and answer clearly: "
             "- Can the person move forward safely? "
