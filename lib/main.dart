@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import './services/notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase/firebase_options.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import './components/backendUrlWidget.dart';
 
@@ -13,7 +12,6 @@ import 'package:clearway/routes.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await dotenv.load(fileName: "assets/.env"); // ✅ for Flutter Web compatibility
   runApp(const ProviderScope(child: MyApp()));
 }
 
