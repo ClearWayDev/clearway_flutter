@@ -21,6 +21,7 @@ void stopBackgroundService() {
 }
 
 Future<void> initializeBackgroundService() async {
+  print("Initializing background service...");
   const notificationChannelId = 'my_foreground';
   const notificationId = 888;
 
@@ -66,7 +67,8 @@ Future<void> initializeBackgroundService() async {
 void startBackgroundConnection() {
   final websocket = WebSocketService.getInstance();
   final userInfo = ProviderContainer().read(userProvider);
-
+  print("Starting background connection...");
+  print("Websocket server URL: ${websocket.socket.io.uri}");
   Connectivity().onConnectivityChanged.listen((results) {
     if (results.contains(ConnectivityResult.wifi) ||
         results.contains(ConnectivityResult.mobile)) {
