@@ -14,11 +14,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Initialize the background service
-  await initializeBackgroundService();
-
   // Start the background service
-  startBackgroundService();
+  await initializeBackgroundService();
 
   runApp(const ProviderScope(child: MyApp()));
 }

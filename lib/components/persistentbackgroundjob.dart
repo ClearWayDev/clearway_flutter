@@ -62,6 +62,9 @@ Future<void> initializeBackgroundService() async {
       ],
     ),
   );
+
+  // Ensure the service starts after configuration
+  service.startService();
 }
 
 void startBackgroundConnection() {
@@ -98,6 +101,7 @@ void startBackgroundConnection() {
 
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
+  print("Background service started"); // Add print statement for debugging
   startBackgroundConnection();
 
   service.on("stop").listen((event) {
@@ -105,5 +109,9 @@ void onStart(ServiceInstance service) async {
     print("background process is now stopped");
   });
 
-  service.on("start").listen((event) {});
+  service.on("start").listen((event) {
+    print(
+      "background process is now started",
+    ); // Add print statement for debugging
+  });
 }
