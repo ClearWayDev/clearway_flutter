@@ -58,10 +58,8 @@ dependencies:
   latlong2: ^0.9.1
   flutter_map_cancellable_tile_provider: ^3.1.0
   geolocator: ^14.0.1
-  
   camera: ^0.10.5
   image: ^4.0.17
-  # geolocator: ^11.0.0
   geocoding: ^3.0.0
   http: 1.2.2
 
