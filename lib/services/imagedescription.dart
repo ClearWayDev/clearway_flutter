@@ -86,10 +86,19 @@ class ImageDescriptionService {
       return response.text ?? "No description was generated.";
     } catch (e) {
       print("❌ Gemini failed: $e");
-      return "Error describing the image. :$e";
+      return "Error describing the image: $e";
     }
   }
 
+  /// 🔊 Speak a single line
+  Future<void> speak(String text) async {
+    await _flutterTts.setLanguage("en-US");
+    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setPitch(1.0);
+    await _flutterTts.speak(text);
+  }
+
+  /// 🔊 Speak multiple parts in sequence
   Future<void> speakMultiple(List<String> texts) async {
     if (texts.isEmpty) return;
 
@@ -106,7 +115,6 @@ class ImageDescriptionService {
         print("📣 Speaking part ${index + 1}: ${texts[index]}");
         _flutterTts.speak(texts[index]);
       } else {
-        // Do nothing; just complete the future
         completer.complete();
       }
     });
