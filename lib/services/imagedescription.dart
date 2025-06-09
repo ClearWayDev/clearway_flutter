@@ -59,52 +59,69 @@ class ImageDescriptionService {
     return Uint8List.fromList(compressed);
   }
 
-  Future<String> describeImage(
-    Uint8List imageBytes,
-    String guidanceText,
-  ) async {
-    print("🧠 Describing image with navigation...");
+  Future<String> describeImageOnly(Uint8List imageBytes) async {
+    print("🧠 Describing image only...");
 
     final model = GenerativeModel(
       model: 'gemini-1.5-flash',
       apiKey: _geminiApiKey,
-      generationConfig: GenerationConfig(maxOutputTokens: 2048),
+      generationConfig: GenerationConfig(maxOutputTokens: 512),
     );
 
     try {
       final response = await model.generateContent([
         Content.multi([
           TextPart(
-            "You are helping a blind person navigate their surroundings using an image and navigation directions.\n\n"
-            "First, look at the image and answer clearly:\n"
+            "You are helping a blind person navigate their surroundings based on the image alone.\n\n"
             "- Can the person move forward safely?\n"
             "- Are there any objects or people in front?\n"
-            "- Mention any obstacles or dangers briefly.\n\n"
-            "Then, consider the following navigation directions from Google Maps:\n"
-            "$guidanceText\n\n"
-            "From these directions, summarize only the **first meaningful instruction** the person should follow.\n"
-            "Be clear and speak-friendly. Do not repeat the full directions. Just summarize the first useful step.",
+            "- Mention any obstacles or dangers clearly and briefly.",
           ),
           DataPart('image/jpeg', imageBytes),
         ]),
       ]);
 
       final result = response.text?.trim();
+      print("🤖 Image-only response:\n$result");
 
-      // ✅ Print Gemini's response for debugging
-      print("🤖 Gemini response:\n$result");
-
-      // ✅ Check if the response is empty or just echoes the guidance
-      if (result == null ||
-          result.isEmpty ||
-          result.contains(guidanceText.substring(0, 50))) {
-        return "Gemini could not generate a valid response.";
+      if (result == null || result.isEmpty) {
+        return "Unable to describe the image.";
       }
-
       return result;
     } catch (e) {
-      print("❌ Gemini failed: $e");
+      print("❌ Gemini (image only) failed: $e");
       return "Error describing the image: $e";
+    }
+  }
+
+  Future<String> getFirstDirection(String guidanceText) async {
+    print("🧭 Summarizing first direction...");
+
+    final model = GenerativeModel(
+      model: 'gemini-1.5-flash',
+      apiKey: _geminiApiKey,
+      generationConfig: GenerationConfig(maxOutputTokens: 256),
+    );
+
+    try {
+      final response = await model.generateContent([
+        Content.text(
+          "Here are walking directions: $guidanceText\n\n"
+          "Please extract and return only the *first meaningful instruction* "
+          "(e.g., 'Head east on Main St'). Do not repeat the full directions.",
+        ),
+      ]);
+
+      final result = response.text?.trim();
+      print("🤖 First direction response:\n$result");
+
+      if (result == null || result.isEmpty) {
+        return "Unable to extract first direction.";
+      }
+      return result;
+    } catch (e) {
+      print("❌ Gemini (first direction) failed: $e");
+      return "Error extracting direction: $e";
     }
   }
 
@@ -140,19 +157,17 @@ class ImageDescriptionService {
 
       final compressedBytes = await compressImage(photo);
 
+      final imgDesc = await describeImageOnly(compressedBytes);
       final guidanceService = GuidanceService();
+      final directionsRaw = await guidanceService.getGuidance("Galle fort");
+      final firstDir = await getFirstDirection(directionsRaw);
+
       String guidance = await guidanceService.getGuidance("Galle fort");
 
-      final imageDescriptionText = await describeImage(
-        compressedBytes,
-        guidance,
-      );
-
       print("🧭 Guidance received: $guidance");
-
-      await speak(imageDescriptionText);
-
-      lastDescription = imageDescriptionText;
+      final combined = "$imgDesc. $firstDir";
+      await speak(combined);
+      lastDescription = combined;
 
       if (_stopRequested) break;
 
