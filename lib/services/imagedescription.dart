@@ -150,9 +150,15 @@ class ImageDescriptionService {
       final guidance = await guidanceService.getGuidance(
         "Galle fort",
       ); //todo : need to fetch destination from saved locartion
+      print("🧭 Guidance received: $guidance");
 
-      final combinedText = "$imageDescriptionText. $guidance";
-      await speak(combinedText);
+      // final combinedText = "$imageDescriptionText. $guidance";
+      await speak(imageDescriptionText);
+      await Future.delayed(
+        Duration(seconds: 1),
+      ); // short pause between speeches
+      await speak(guidance);
+
       // await speak(imageDescriptionText);
 
       if (_stopRequested) break;
