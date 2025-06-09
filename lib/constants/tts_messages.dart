@@ -33,7 +33,8 @@ class TtsMessages {
   "By signing up, you agree to our privacy policy and terms and conditions.";
 
   static const signinScreen = 
-    "You are now on the signin screen";
+    "You are now on the signin screen. "
+    "Please note, you may require assistance to signin or create an account. ";
 
   static const videoCallAnswerSuccess = 
     "Your call is connected";
