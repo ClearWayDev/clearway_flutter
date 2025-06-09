@@ -58,10 +58,8 @@ class AuthService {
 
   // Sign in
   Future<UserInfo?> signIn(String email, String password) async {
-  String? token;
-    if (!kIsWeb) {
-    token = await NotificationService().getFCMToken();
-  }
+      final token = await NotificationService().getFCMToken();
+
 
     final cred = await _firebaseAuth.signInWithEmailAndPassword(
       email: email,
@@ -77,16 +75,15 @@ class AuthService {
     final userType = data['isBlind'] == true ? UserType.blind : UserType.volunteer;
 
     // Save FCM token
-        if (!kIsWeb) {
     await _firestoreService.addFcmToken(fbUser.uid, token!);
-  }
+
 
       await cred.user!.updateDisplayName(data['name']);
 
     return UserInfo(
       uid: fbUser.uid,
       userType: userType,
-      fcmToken: '',
+      fcmToken: token,
       username: data['name'],
     );
   }
