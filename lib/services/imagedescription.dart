@@ -180,11 +180,17 @@ class ImageDescriptionService {
       if (photo == null) break;
 
       final compressedBytes = await compressImage(photo);
-
       final imgDesc = await describeImageOnly(compressedBytes);
+
       final guidanceService = GuidanceService();
-      final destination = fetchSavedLocationAndGetGuidance();
-      final directionsRaw = await guidanceService.getGuidance(destination as String);
+      final destination = await fetchSavedLocationAndGetGuidance();
+
+      if (destination == "User not logged in.") {
+        print("No destination available.");
+        return "No destination found";
+      }
+
+      final directionsRaw = await guidanceService.getGuidance(destination);
       final firstDir = await getFirstDirection(directionsRaw);
 
       final combined = "$imgDesc. $firstDir";
