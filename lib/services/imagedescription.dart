@@ -131,8 +131,13 @@ class ImageDescriptionService {
       final response = await model.generateContent([
         Content.text(
           "Here are walking directions: $guidanceText\n\n"
-          "Please extract and return only the *first meaningful instruction* "
-          "(e.g., 'Head east on Main St'). Do not repeat the full directions.",
+          "From these directions, extract and return only the *first specific walking instruction* that tells:\n"
+          "- the **nearest place to turn** (left, right, or continue straight),\n"
+          "- **how far** the user needs to walk before that turn (e.g., 'in 80 meters'),\n"
+          "- and **where** to turn (include the name of the road, landmark, or intersection if available).\n\n"
+          "Do not provide vague phrases like 'Head east' or general guidance.\n"
+          "Return only one meaningful instruction. For example:\n"
+          "'Walk 80 meters and turn right onto King Street.' or 'In 60 meters, turn left at the library entrance.'",
         ),
       ]);
 
