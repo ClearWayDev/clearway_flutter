@@ -154,7 +154,7 @@ class _AccessMediaScreenState extends State<AccessMediaScreen> {
 
             // Description
             const Text(
-              'To make video calls, give access to your microphone & camera. To use Bluetooth devices, please give access to Bluetooth.',
+              'To make video calls, give access to your microphone & camera. To use location, please give access to location.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
             ),

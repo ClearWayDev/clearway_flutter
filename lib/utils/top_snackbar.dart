@@ -6,7 +6,7 @@ void showTopSnackBar(
   BuildContext context,
   String message, {
   TopSnackBarType type = TopSnackBarType.info,
-  Duration duration = const Duration(seconds: 2),
+  Duration duration = const Duration(seconds: 3),
 }) {
   final overlay = Overlay.of(context);
   final color = _getSnackBarColor(type);
