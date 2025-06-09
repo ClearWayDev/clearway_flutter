@@ -151,9 +151,9 @@ class ImageDescriptionService {
         "Galle fort",
       ); //todo : need to fetch destination from saved locartion
 
-      // final combinedText = "$imageDescriptionText. $guidance";
-      await speak(guidance);
-      await speak(imageDescriptionText);
+      final combinedText = "$imageDescriptionText. $guidance";
+      // await speak(guidance);
+      // await speak(imageDescriptionText);
 
       if (_stopRequested) break;
 
