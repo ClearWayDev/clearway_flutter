@@ -53,30 +53,35 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
       _showVideoCallPopup = true;
     });
   }
-  // AI Popup handlers
   void _handleAIDoubleTap() async {
+  // Prevent multiple double-taps from re-triggering
+  if (_imageDescriptionService.isLooping) return;
+
+  await _imageDescriptionService.stopSpeak();
+  await Future.delayed(const Duration(milliseconds: 1000));
+
+  await _imageDescriptionService.speak("Capturing. Please keep the back camera facing forward.");
+
+  final description = await _imageDescriptionService.captureDescribeSpeak();
+
+  if (description == null) {
     await _imageDescriptionService.stopSpeak();
-    await Future.delayed(const Duration(milliseconds: 1000));
-    
-    await _imageDescriptionService.speak("Capturing. keep back camera facing forward.");
-    
-    final description = await _imageDescriptionService.captureDescribeSpeak();
-    
-    if (description == null) {
-      await _imageDescriptionService.stopSpeak();
-      await Future.delayed(const Duration(seconds: 1));
-      _imageDescriptionService.speak("Capture stopped or failed. Try again.");
-    } else {
-      print("AI Description: $description");
-    }
+    await Future.delayed(const Duration(seconds: 1));
+  } else {
+    print("AI Description: $description");
   }
+}
 
-  void _handleAITripleTap() async {
-        await _imageDescriptionService.stopSpeak();
-        await Future.delayed(const Duration(milliseconds: 800));
-    _closeAIPopup();
+void _handleAITripleTap() async {
+  await _imageDescriptionService.stopSpeak();
+  await Future.delayed(const Duration(milliseconds: 800));
+
+  // Stop captureDescribeSpeak if it's running
+  if (_imageDescriptionService.isLooping) {
+    await _imageDescriptionService.captureDescribeSpeak();
   }
-
+  _closeAIPopup();
+}
   void _closeAIPopup() async {
         await Future.delayed(const Duration(milliseconds: 500));
     setState(() {

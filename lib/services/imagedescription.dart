@@ -225,4 +225,7 @@ class ImageDescriptionService {
     print("Loop finished.");
     return lastDescription;
   }
+
+  bool get isLooping => _isLooping;
 }
+
