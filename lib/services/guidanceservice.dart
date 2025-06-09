@@ -14,7 +14,6 @@ class GuidanceService {
         desiredAccuracy: LocationAccuracy.high,
       );
       final origin = "${position.latitude},${position.longitude}";
-      // final destination = Uri.encodeComponent(destinationPlaceName);
 
       final url =
           Uri.https('maps.googleapis.com', '/maps/api/directions/json', {
@@ -37,13 +36,12 @@ class GuidanceService {
       }
 
       final steps = data['routes'][0]['legs'][0]['steps'];
-      final instructions = steps
-          .map<String>((step) {
-            return _stripHtmlTags(step['html_instructions']);
-          })
-          .join(', ');
+      if (steps.isEmpty) {
+        return "No walking directions found.";
+      }
 
-      return "Directions to $destinationPlaceName: $instructions";
+      final firstInstruction = _stripHtmlTags(steps[0]['html_instructions']);
+      return "Start: $firstInstruction";
     } catch (e) {
       return "Error fetching guidance: $e";
     }
