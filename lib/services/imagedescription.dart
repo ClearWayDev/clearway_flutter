@@ -59,8 +59,11 @@ class ImageDescriptionService {
     return Uint8List.fromList(compressed);
   }
 
-  Future<String> describeImage(Uint8List imageBytes) async {
-    print("🧠 Describing image...");
+  Future<String> describeImage(
+    Uint8List imageBytes,
+    String guidanceText,
+  ) async {
+    print("🧠 Describing image with navigation...");
 
     final model = GenerativeModel(
       model: 'gemini-1.5-flash',
@@ -72,12 +75,15 @@ class ImageDescriptionService {
       final response = await model.generateContent([
         Content.multi([
           TextPart(
-            "You are assisting a blind person in navigating their environment. "
-            "Look at this image and answer clearly: "
-            "- Can the person move forward safely? "
-            "- Are there any objects or people that may be moving in front of them? "
-            "- Mention any obstacles or dangers (like steps, walls, vehicles, or other people). "
-            "Keep the description clear and short so it can be spoken by a voice assistant.",
+            "You are helping a blind person navigate their surroundings using an image and navigation directions.\n\n"
+            "First, look at the image and answer clearly:\n"
+            "- Can the person move forward safely?\n"
+            "- Are there any objects or people in front?\n"
+            "- Mention any obstacles or dangers briefly.\n\n"
+            "Then, consider the following navigation directions from Google Maps:\n"
+            "$guidanceText\n\n"
+            "From these directions, summarize only the **first meaningful instruction** the person should follow.\n"
+            "Be clear and speak-friendly.",
           ),
           DataPart('image/jpeg', imageBytes),
         ]),
@@ -90,39 +96,11 @@ class ImageDescriptionService {
     }
   }
 
-  /// 🔊 Speak a single line
   Future<void> speak(String text) async {
     await _flutterTts.setLanguage("en-US");
     await _flutterTts.setSpeechRate(0.5);
     await _flutterTts.setPitch(1.0);
     await _flutterTts.speak(text);
-  }
-
-  /// 🔊 Speak multiple parts in sequence
-  Future<void> speakMultiple(List<String> texts) async {
-    if (texts.isEmpty) return;
-
-    final completer = Completer<void>();
-    int index = 0;
-
-    await _flutterTts.setLanguage("en-US");
-    await _flutterTts.setSpeechRate(0.5);
-    await _flutterTts.setPitch(1.0);
-
-    _flutterTts.setCompletionHandler(() {
-      index++;
-      if (index < texts.length) {
-        print("📣 Speaking part ${index + 1}: ${texts[index]}");
-        _flutterTts.speak(texts[index]);
-      } else {
-        completer.complete();
-      }
-    });
-
-    print("📣 Speaking part 1: ${texts[0]}");
-    _flutterTts.speak(texts[0]);
-
-    await completer.future;
   }
 
   Future<void> stopSpeak() async {
@@ -149,13 +127,20 @@ class ImageDescriptionService {
       if (photo == null) break;
 
       final compressedBytes = await compressImage(photo);
-      final imageDescriptionText = await describeImage(compressedBytes);
 
       final guidanceService = GuidanceService();
       String guidance = await guidanceService.getGuidance("Galle fort");
+
+      final imageDescriptionText = await describeImage(
+        compressedBytes,
+        guidance,
+      );
+
       print("🧭 Guidance received: $guidance");
 
-      await speakMultiple([imageDescriptionText, guidance]);
+      await speak(imageDescriptionText);
+
+      lastDescription = imageDescriptionText;
 
       if (_stopRequested) break;
 
