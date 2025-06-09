@@ -83,13 +83,25 @@ class ImageDescriptionService {
             "Then, consider the following navigation directions from Google Maps:\n"
             "$guidanceText\n\n"
             "From these directions, summarize only the **first meaningful instruction** the person should follow.\n"
-            "Be clear and speak-friendly.",
+            "Be clear and speak-friendly. Do not repeat the full directions. Just summarize the first useful step.",
           ),
           DataPart('image/jpeg', imageBytes),
         ]),
       ]);
 
-      return response.text ?? "No description was generated.";
+      final result = response.text?.trim();
+
+      // ✅ Print Gemini's response for debugging
+      print("🤖 Gemini response:\n$result");
+
+      // ✅ Check if the response is empty or just echoes the guidance
+      if (result == null ||
+          result.isEmpty ||
+          result.contains(guidanceText.substring(0, 50))) {
+        return "Gemini could not generate a valid response.";
+      }
+
+      return result;
     } catch (e) {
       print("❌ Gemini failed: $e");
       return "Error describing the image: $e";
