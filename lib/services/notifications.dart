@@ -46,7 +46,7 @@ class NotificationService {
   }
 
   Future<String?> getFCMToken() async {
-    initialize();
+    await initialize();
     return await FirebaseMessaging.instance.getToken();
   }
 

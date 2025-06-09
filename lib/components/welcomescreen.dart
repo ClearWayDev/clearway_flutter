@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:clearway/services/imagedescription.dart';
 import 'package:clearway/constants/tts_messages.dart';
-
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart';
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -11,6 +13,7 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
+     bool _isLoading = false;
   @override
   void initState() {
     super.initState();
@@ -20,6 +23,37 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     ImageDescriptionService().speak(TtsMessages.welcomeScreen);
   });
   }
+
+ Future<void> _hardwareAccess() async {
+   ImageDescriptionService().stopSpeak();
+    await Future.delayed(const Duration(milliseconds: 1000));
+    setState(() => _isLoading = true);
+
+  if (kIsWeb) {
+    setState(() => _isLoading = false);
+    Navigator.pushNamed(context, '/signin');
+    return;
+  }
+
+  final List<Permission> permissionsToRequest = [
+    Permission.camera,
+    Permission.microphone,
+    Permission.locationWhenInUse,
+  ];
+
+  // Check if all permissions are already granted
+  final statusesBefore = await Future.wait(permissionsToRequest.map((p) => p.status));
+  final allGrantedBefore = statusesBefore.every((status) => status == PermissionStatus.granted);
+
+  if (allGrantedBefore) {
+    setState(() => _isLoading = false);
+    Navigator.pushNamed(context, '/signin');
+    return;
+  }
+
+  setState(() => _isLoading = false);
+  Navigator.pushNamed(context, '/access-media');
+}
 
   @override
   Widget build(BuildContext context) {
@@ -98,34 +132,39 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
             // Bottom button
             Padding(
-              padding: const EdgeInsets.fromLTRB(15, 0, 15, 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ImageDescriptionService().stopSpeak();
-                    Future.delayed(const Duration(milliseconds: 500), () {
-                    Navigator.pushNamed(context, '/signin');
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    'Explore',
-                    style: GoogleFonts.urbanist(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+  padding: const EdgeInsets.fromLTRB(15, 0, 15, 20),
+  child: SizedBox(
+    width: double.infinity,
+    height: 56,
+    child: ElevatedButton(
+      onPressed: _isLoading ? null : _hardwareAccess,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: _isLoading
+          ? const SizedBox(
+              height: 24,
+              width: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
+          : Text(
+              'Explore',
+              style: GoogleFonts.urbanist(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Colors.white,
               ),
             ),
+    ),
+  ),
+),
+
           ],
         ),
       ),

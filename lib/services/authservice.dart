@@ -3,7 +3,7 @@ import 'package:clearway/models/user_info.dart';
 import 'package:clearway/services/firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:latlong2/latlong.dart';
 class AuthService {
   final fb.FirebaseAuth _firebaseAuth = fb.FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -16,6 +16,7 @@ class AuthService {
   String name,
   UserType userType,
   String fcmToken,
+  LatLng? location, // <-- Add optional location param
 ) async {
   final cred = await _firebaseAuth.createUserWithEmailAndPassword(
     email: email,
@@ -37,6 +38,12 @@ class AuthService {
   // Save FCM token
   await _firestoreService.addFcmToken(user.id, fcmToken);
 
+   //Save location to 'location' collection if exists
+    if (location != null) {
+    await _firestore.collection('locations').doc(user.id).set({
+      'location': GeoPoint(location.latitude, location.longitude),
+    });
+  }
   return UserInfo(
     uid: user.id,
     userType: userType,
@@ -106,15 +113,28 @@ class AuthService {
 }
 
 Future<Map<String, dynamic>?> getUserDetails(String uid) async {
-    final doc = await _firestore.collection('users').doc(uid).get();
-    if (!doc.exists) return null;
+  // Get user document
+  final userDoc = await _firestore.collection('users').doc(uid).get();
+  if (!userDoc.exists) return null;
 
-    final data = doc.data()!;
-    return {
-      'username': data['name'] ?? '',
-      'email': data['email'] ?? '',
-      'userType': data['isBlind'] == true ? UserType.blind : UserType.volunteer,
-    };
+  final data = userDoc.data()!;
+  LatLng? location;
+
+  // Try to get location document
+  final locationDoc = await _firestore.collection('locations').doc(uid).get();
+  if (locationDoc.exists) {
+    final geo = locationDoc['location'];
+    if (geo is GeoPoint) {
+      location = LatLng(geo.latitude, geo.longitude);
+    }
+  }
+
+  return {
+    'username': data['name'] ?? '',
+    'email': data['email'] ?? '',
+    'userType': data['isBlind'] == true ? UserType.blind : UserType.volunteer,
+    if (location != null) 'location': location,
+  };
 }
 
 Future<bool> updateUsername(String uid, String newName) async {
@@ -130,6 +150,15 @@ Future<bool> updateUsername(String uid, String newName) async {
     return true;
 }
 
+Future<bool> updateUserLocation(String uid, LatLng? selectedLocation) async {
+  if (selectedLocation == null) return false;
+
+  await _firestore.collection('locations').doc(uid).set({
+    'location': GeoPoint(selectedLocation.latitude, selectedLocation.longitude),
+  });
+
+  return true;
+}
 
   // Sign out
   Future<void> signOut() async {
