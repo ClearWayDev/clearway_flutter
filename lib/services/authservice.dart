@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:clearway/services/notifications.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthService {
   final fb.FirebaseAuth _firebaseAuth = fb.FirebaseAuth.instance;
@@ -57,7 +58,10 @@ class AuthService {
 
   // Sign in
   Future<UserInfo?> signIn(String email, String password) async {
-    final token = await NotificationService().getFCMToken();
+  String? token;
+    if (!kIsWeb) {
+    token = await NotificationService().getFCMToken();
+  }
 
     final cred = await _firebaseAuth.signInWithEmailAndPassword(
       email: email,
@@ -73,14 +77,16 @@ class AuthService {
     final userType = data['isBlind'] == true ? UserType.blind : UserType.volunteer;
 
     // Save FCM token
+        if (!kIsWeb) {
     await _firestoreService.addFcmToken(fbUser.uid, token!);
+  }
 
       await cred.user!.updateDisplayName(data['name']);
 
     return UserInfo(
       uid: fbUser.uid,
       userType: userType,
-      fcmToken: token,
+      fcmToken: '',
       username: data['name'],
     );
   }

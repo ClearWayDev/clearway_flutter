@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:clearway/services/authservice.dart';
 import 'package:clearway/widgets/inputfield.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:clearway/providers/fcm_token_state.dart';
 import 'package:clearway/providers/user_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:clearway/models/user.dart';
@@ -46,11 +45,9 @@ class _SigninScreenState extends ConsumerState<SigninScreen> {
   setState(() => _isLoading = true);
 
   try {
-    final fcmToken = ref.watch(fcmTokenProvider) ?? '';
     final user = await _authService.signIn(
       _emailController.text.trim(),
       _passwordController.text.trim(),
-      fcmToken,
     );
 
     if (user != null) {
@@ -70,6 +67,7 @@ class _SigninScreenState extends ConsumerState<SigninScreen> {
   } on FirebaseAuthException catch (e) {
     final message = getFirebaseAuthErrorMessage(e);
     showTopSnackBar(context, 'Sign In Failed: $message', type: TopSnackBarType.error);
+    print("'Sign In Failed: $message'");
   } catch (e) {
     showTopSnackBar(context, 'Sign In Failed: ${e.toString()}', type: TopSnackBarType.error);
   }finally {
