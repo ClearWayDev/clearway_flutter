@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:clearway/services/guidanceservice.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart'; // for kIsWeb
+import 'package:flutter/foundation.dart'; 
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image/image.dart' as img;
@@ -96,11 +96,16 @@ class ImageDescriptionService {
       final response = await model.generateContent([
         Content.multi([
           TextPart(
-            "You are helping a blind person navigate their surroundings based on the image alone.\n\n"
-            "- Can the person move forward safely?\n"
-            "- Are there any objects or people in front?\n"
-            "- Mention any obstacles or dangers clearly and briefly.",
+            "You are assisting a blind person in understanding their surroundings based only on this image.\n\n"
+            "Analyze the scene carefully and answer these questions clearly and briefly:\n"
+            "- Is the path ahead walkable and free of major obstacles?\n"
+            "- How far can the person move forward safely (estimate in meters if possible)?\n"
+            "- Are there any objects, people, vehicles, or roadblocks ahead?\n"
+            "- Describe the structure of the path (e.g., narrow sidewalk, open street, stairs, slope).\n"
+            "- Mention if the road or area ahead curves, slopes, ends, or has intersections nearby.\n\n"
+            "Provide the description in a short and helpful way. Prioritize safety and direction awareness.",
           ),
+
           DataPart('image/jpeg', imageBytes),
         ]),
       ]);
@@ -130,14 +135,15 @@ class ImageDescriptionService {
     try {
       final response = await model.generateContent([
         Content.text(
-          "Here are walking directions: $guidanceText\n\n"
-          "From these directions, extract and return only the *first specific walking instruction* that tells:\n"
-          "- the **nearest place to turn** (left, right, or continue straight),\n"
-          "- **how far** the user needs to walk before that turn (e.g., 'in 80 meters'),\n"
-          "- and **where** to turn (include the name of the road, landmark, or intersection if available).\n\n"
-          "Do not provide vague phrases like 'Head east' or general guidance.\n"
-          "Return only one meaningful instruction. For example:\n"
-          "'Walk 80 meters and turn right onto King Street.' or 'In 60 meters, turn left at the library entrance.'",
+          "You are assisting a blind person who is following walking directions.\n"
+          "Given the directions below, extract and return only the *first clear and actionable instruction* that:\n"
+          "- Tells exactly how far the person should walk (e.g., 'in 60 meters'),\n"
+          "- States the direction they need to turn (left, right, or continue straight),\n"
+          "- Mentions any nearby road names, landmarks, or intersections to help orient them.\n\n"
+          "Avoid vague instructions like 'Head east' or 'Go straight'.\n"
+          "Be specific and practical. Only return **one short sentence**.\n"
+          "Example: 'Walk 70 meters and turn left onto Pine Street near the pharmacy.'\n\n"
+          "Directions:\n$guidanceText",
         ),
       ]);
 
