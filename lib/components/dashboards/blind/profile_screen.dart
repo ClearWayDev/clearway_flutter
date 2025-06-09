@@ -288,8 +288,8 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
               children: [
                 Column(
                   children: [
-                    // Top Half: Profile content
-                    Flexible(
+                    // Profile content with proper spacing
+                    Expanded(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -299,7 +299,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                               'Your Profile',
                               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                             
                             // Username Field
                             TextField(
@@ -314,6 +314,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                                 ),
                                 filled: true,
                                 fillColor: _editing ? Colors.white : Colors.grey.shade100,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                                 suffixIcon: _saving
                                     ? const Padding(
                                         padding: EdgeInsets.all(12.0),
@@ -347,7 +348,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                               ),
                               onSubmitted: _editing ? (_) => _saveUsername() : null,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             
                             // Email Field
                             TextField(
@@ -360,9 +361,10 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                                 ),
                                 filled: true,
                                 fillColor: Colors.grey.shade100,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             
                             // Role Field
                             TextField(
@@ -375,9 +377,10 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                                 ),
                                 filled: true,
                                 fillColor: Colors.grey.shade100,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                             
                             // Location Selection for Blind Users
                             Container(
@@ -394,14 +397,15 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                                 onTap: _editingLocation ? _openLocationPicker : null,
                                 borderRadius: BorderRadius.circular(8),
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                   child: Row(
                                     children: [
                                       Icon(
                                         Icons.location_on,
                                         color: _selectedLocation != null ? Colors.teal : Colors.grey,
+                                        size: 20,
                                       ),
-                                      const SizedBox(width: 12),
+                                      const SizedBox(width: 10),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -414,7 +418,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                                                 color: Colors.grey.shade600,
                                               ),
                                             ),
-                                            const SizedBox(height: 4),
+                                            const SizedBox(height: 2),
                                             Text(
                                               _locationText,
                                               style: GoogleFonts.urbanist(
@@ -429,7 +433,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                                       ),
                                       if (_savingLocation)
                                         const Padding(
-                                          padding: EdgeInsets.all(8.0),
+                                          padding: EdgeInsets.all(6.0),
                                           child: SizedBox(
                                             width: 20,
                                             height: 20,
@@ -467,7 +471,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                             // Location Validation Error
                             if (_locationValidationError != null)
                               Padding(
-                                padding: const EdgeInsets.only(top: 8, left: 16),
+                                padding: const EdgeInsets.only(top: 6, left: 12),
                                 child: Text(
                                   _locationValidationError!,
                                   style: const TextStyle(
@@ -478,7 +482,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                                 ),
                               ),
                             
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 16),
                             
                             // Action Buttons
                             Row(
@@ -488,19 +492,23 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                                     onPressed: () {
                                       Navigator.pushNamed(context, '/reset-password');
                                     },
-                                    icon: const Icon(Icons.lock_reset),
-                                    label: const Text('Reset Password'),
+                                    icon: const Icon(Icons.lock_reset, size: 18),
+                                    label: const Text('Reset Password', style: TextStyle(fontSize: 14)),
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: ElevatedButton.icon(
                                     onPressed: _logout,
-                                    icon: const Icon(Icons.logout),
-                                    label: const Text('Logout'),
+                                    icon: const Icon(Icons.logout, size: 18),
+                                    label: const Text('Logout', style: TextStyle(fontSize: 14)),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.red,
                                       foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
                                     ),
                                   ),
                                 ),
@@ -508,7 +516,7 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                             ),
                             
                             // Add extra space when keyboard is visible
-                            if (_keyboardVisible) const SizedBox(height: 100),
+                            if (_keyboardVisible) const SizedBox(height: 80),
                           ],
                         ),
                       ),
@@ -516,33 +524,32 @@ class _BlindProfileScreenState extends ConsumerState<BlindProfileScreen> {
                   ],
                 ),
                 
-                // Bottom navigation area
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: IgnorePointer(
-                    ignoring: _editing || _keyboardVisible || _editingLocation || _showLocationPicker,
+                // Bottom navigation area - Takes all remaining space
+                if (!_editing && !_keyboardVisible && !_editingLocation && !_showLocationPicker)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
                     child: GestureDetector(
                       onTap: _navigateToHome,
                       child: Container(
                         width: double.infinity,
-                        height: MediaQuery.of(context).size.height * 0.4,
-                        color: (_editing || _keyboardVisible || _editingLocation || _showLocationPicker) 
-                            ? Colors.transparent
-                            : Colors.grey.shade200,
-                        child: Center(
+                        height: MediaQuery.of(context).size.height * 0.35, // Takes 35% of screen height
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          border: Border(
+                            top: BorderSide(color: Colors.grey.shade300, width: 1),
+                          ),
+                        ),
+                        child: const Center(
                           child: Text(
-                            (_editing || _keyboardVisible || _editingLocation || _showLocationPicker)
-                                ? ''
-                                : 'Tap here to return to Home',
-                            style: const TextStyle(fontSize: 20, color: Colors.black54),
+                            'Tap here to return to Home',
+                            style: TextStyle(fontSize: 18, color: Colors.black54),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
                 
                 // Location Picker Overlay
                 if (_showLocationPicker)
