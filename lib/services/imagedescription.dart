@@ -1,11 +1,11 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:clearway/services/guidanceservice.dart';
 import 'package:flutter/foundation.dart'; // for kIsWeb
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image/image.dart' as img;
-import 'package:permission_handler/permission_handler.dart';
 
 class ImageDescriptionService {
   final FlutterTts _flutterTts = FlutterTts();
@@ -15,16 +15,6 @@ class ImageDescriptionService {
   bool _stopRequested = false;
 
   CameraController? _cameraController;
-
-  Future<bool> _requestCameraPermission() async {
-    print("🔐 Checking camera permission...");
-    final status = await Permission.camera.status;
-    if (!status.isGranted) {
-      final result = await Permission.camera.request();
-      return result.isGranted;
-    }
-    return true;
-  }
 
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
@@ -41,14 +31,6 @@ class ImageDescriptionService {
   }
 
   Future<XFile?> autoCaptureImage() async {
-    if (!kIsWeb) {
-      final permissionGranted = await _requestCameraPermission();
-      if (!permissionGranted) {
-        print("❌ Camera permission denied.");
-        return null;
-      }
-    }
-
     try {
       if (_cameraController == null ||
           !_cameraController!.value.isInitialized) {
@@ -72,8 +54,8 @@ class ImageDescriptionService {
       throw Exception("Failed to decode image");
     }
 
-    final resized = img.copyResize(original, width: 512); // smaller width
-    final compressed = img.encodeJpg(resized, quality: 70); // medium quality
+    final resized = img.copyResize(original, width: 512);
+    final compressed = img.encodeJpg(resized, quality: 70);
     return Uint8List.fromList(compressed);
   }
 
@@ -104,21 +86,35 @@ class ImageDescriptionService {
       return response.text ?? "No description was generated.";
     } catch (e) {
       print("❌ Gemini failed: $e");
-      return "Error describing the image. :$e ";
+      return "Error describing the image. :$e";
     }
   }
 
-  Future<void> speak(String text) async {
-    try {
-      await _flutterTts.stop();
-      await _flutterTts.setLanguage("en-US");
-      await _flutterTts.setSpeechRate(0.5);
-      await _flutterTts.setPitch(1.0);
-      print("📣 Speaking: $text");
-      await _flutterTts.speak(text);
-    } catch (e) {
-      print("❌ TTS Error: $e");
-    }
+  Future<void> speakMultiple(List<String> texts) async {
+    if (texts.isEmpty) return;
+
+    final completer = Completer<void>();
+    int index = 0;
+
+    await _flutterTts.setLanguage("en-US");
+    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setPitch(1.0);
+
+    _flutterTts.setCompletionHandler(() {
+      index++;
+      if (index < texts.length) {
+        print("📣 Speaking part ${index + 1}: ${texts[index]}");
+        _flutterTts.speak(texts[index]);
+      } else {
+        // Do nothing; just complete the future
+        completer.complete();
+      }
+    });
+
+    print("📣 Speaking part 1: ${texts[0]}");
+    _flutterTts.speak(texts[0]);
+
+    await completer.future;
   }
 
   Future<void> stopSpeak() async {
@@ -146,20 +142,12 @@ class ImageDescriptionService {
 
       final compressedBytes = await compressImage(photo);
       final imageDescriptionText = await describeImage(compressedBytes);
+
       final guidanceService = GuidanceService();
-      final guidance = await guidanceService.getGuidance(
-        "Galle fort",
-      ); //todo : need to fetch destination from saved locartion
+      final guidance = await guidanceService.getGuidance("Galle fort");
       print("🧭 Guidance received: $guidance");
 
-      // final combinedText = "$imageDescriptionText. $guidance";
-      await speak(imageDescriptionText);
-      await Future.delayed(
-        Duration(seconds: 1),
-      ); // short pause between speeches
-      await speak(guidance);
-
-      // await speak(imageDescriptionText);
+      await speakMultiple([imageDescriptionText, guidance]);
 
       if (_stopRequested) break;
 
