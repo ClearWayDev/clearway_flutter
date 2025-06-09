@@ -4,6 +4,8 @@ import 'package:clearway/services/firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:clearway/services/notifications.dart';
+
 class AuthService {
   final fb.FirebaseAuth _firebaseAuth = fb.FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -54,7 +56,9 @@ class AuthService {
 
 
   // Sign in
-  Future<UserInfo?> signIn(String email, String password, String fcmToken) async {
+  Future<UserInfo?> signIn(String email, String password) async {
+    final token = await NotificationService().getFCMToken();
+
     final cred = await _firebaseAuth.signInWithEmailAndPassword(
       email: email,
       password: password,
@@ -69,14 +73,14 @@ class AuthService {
     final userType = data['isBlind'] == true ? UserType.blind : UserType.volunteer;
 
     // Save FCM token
-    await _firestoreService.addFcmToken(fbUser.uid, fcmToken);
+    await _firestoreService.addFcmToken(fbUser.uid, token!);
 
       await cred.user!.updateDisplayName(data['name']);
 
     return UserInfo(
       uid: fbUser.uid,
       userType: userType,
-      fcmToken: fcmToken,
+      fcmToken: token,
       username: data['name'],
     );
   }
