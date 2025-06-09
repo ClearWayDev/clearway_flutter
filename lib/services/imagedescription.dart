@@ -152,13 +152,13 @@ class ImageDescriptionService {
       ); //todo : need to fetch destination from saved locartion
 
       final combinedText = "$imageDescriptionText. $guidance";
-      // await speak(guidance);
+      await speak(combinedText);
       // await speak(imageDescriptionText);
 
       if (_stopRequested) break;
 
       print("⏳ Waiting 10 seconds...");
-      for (int i = 0; i < 40; i++) {
+      for (int i = 0; i < 10; i++) {
         if (_stopRequested) break;
         await Future.delayed(Duration(seconds: 1));
       }
