@@ -152,7 +152,7 @@ class ImageDescriptionService {
       final imageDescriptionText = await describeImage(compressedBytes);
 
       final guidanceService = GuidanceService();
-      final guidance = await guidanceService.getGuidance("Galle fort");
+      String guidance = await guidanceService.getGuidance("Galle fort");
       print("🧭 Guidance received: $guidance");
 
       await speakMultiple([imageDescriptionText, guidance]);
