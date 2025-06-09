@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:clearway/services/guidanceservice.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart'; // for kIsWeb
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image/image.dart' as img;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ImageDescriptionService {
   final FlutterTts _flutterTts = FlutterTts();
@@ -27,7 +29,7 @@ class ImageDescriptionService {
       enableAudio: false,
     );
     await _cameraController!.initialize();
-    print("📷 Camera initialized.");
+    print("Camera initialized.");
   }
 
   Future<XFile?> autoCaptureImage() async {
@@ -37,16 +39,16 @@ class ImageDescriptionService {
         await _initializeCamera();
       }
 
-      print("📸 Auto-capturing image...");
+      print("Auto-capturing image...");
       return await _cameraController!.takePicture();
     } catch (e) {
-      print("❌ Failed to auto-capture: $e");
+      print("Failed to auto-capture: $e");
       return null;
     }
   }
 
   Future<Uint8List> compressImage(XFile imageFile) async {
-    print("📉 Compressing image...");
+    print("Compressing image...");
     final bytes = await imageFile.readAsBytes();
     final original = img.decodeImage(bytes);
 
@@ -59,8 +61,30 @@ class ImageDescriptionService {
     return Uint8List.fromList(compressed);
   }
 
+  Future<String> fetchSavedLocationAndGetGuidance() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return "User not logged in.";
+    }
+
+    final doc =
+        await FirebaseFirestore.instance
+            .collection('locations')
+            .doc(user.uid)
+            .get();
+
+    final GeoPoint geoPoint = doc.data()!['location'];
+    final double latitude = geoPoint.latitude;
+    final double longitude = geoPoint.longitude;
+
+    // Format destination as string
+    final String destination = "$latitude,$longitude";
+
+    return destination;
+  }
+
   Future<String> describeImageOnly(Uint8List imageBytes) async {
-    print("🧠 Describing image only...");
+    print("Describing image only...");
 
     final model = GenerativeModel(
       model: 'gemini-1.5-flash',
@@ -82,20 +106,20 @@ class ImageDescriptionService {
       ]);
 
       final result = response.text?.trim();
-      print("🤖 Image-only response:\n$result");
+      print("Image-only response:\n$result");
 
       if (result == null || result.isEmpty) {
         return "Unable to describe the image.";
       }
       return result;
     } catch (e) {
-      print("❌ Gemini (image only) failed: $e");
+      print("Gemini (image only) failed: $e");
       return "Error describing the image: $e";
     }
   }
 
   Future<String> getFirstDirection(String guidanceText) async {
-    print("🧭 Summarizing first direction...");
+    print("Summarizing first direction...");
 
     final model = GenerativeModel(
       model: 'gemini-1.5-flash',
@@ -113,14 +137,14 @@ class ImageDescriptionService {
       ]);
 
       final result = response.text?.trim();
-      print("🤖 First direction response:\n$result");
+      print("First direction response:\n$result");
 
       if (result == null || result.isEmpty) {
         return "Unable to extract first direction.";
       }
       return result;
     } catch (e) {
-      print("❌ Gemini (first direction) failed: $e");
+      print("Gemini (first direction) failed: $e");
       return "Error extracting direction: $e";
     }
   }
@@ -133,11 +157,11 @@ class ImageDescriptionService {
   }
 
   Future<void> stopSpeak() async {
-    print("🛑 Stopping speech...");
+    print("Stopping speech...");
     try {
       await _flutterTts.stop();
     } catch (e) {
-      print("❌ Error stopping speech: $e");
+      print("Error stopping speech: $e");
     }
   }
 
@@ -159,19 +183,17 @@ class ImageDescriptionService {
 
       final imgDesc = await describeImageOnly(compressedBytes);
       final guidanceService = GuidanceService();
-      final directionsRaw = await guidanceService.getGuidance("Galle fort");
+      final destination = fetchSavedLocationAndGetGuidance();
+      final directionsRaw = await guidanceService.getGuidance(destination as String);
       final firstDir = await getFirstDirection(directionsRaw);
 
-      String guidance = await guidanceService.getGuidance("Galle fort");
-
-      print("🧭 Guidance received: $guidance");
       final combined = "$imgDesc. $firstDir";
       await speak(combined);
       lastDescription = combined;
 
       if (_stopRequested) break;
 
-      print("⏳ Waiting 10 seconds...");
+      print("Waiting 10 seconds...");
       for (int i = 0; i < 10; i++) {
         if (_stopRequested) break;
         await Future.delayed(Duration(seconds: 1));
@@ -183,7 +205,7 @@ class ImageDescriptionService {
     await _cameraController?.dispose();
     _cameraController = null;
 
-    print("✅ Loop finished.");
+    print("Loop finished.");
     return lastDescription;
   }
 }

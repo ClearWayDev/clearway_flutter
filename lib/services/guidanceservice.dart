@@ -23,7 +23,7 @@ class GuidanceService {
             'key': _googleApiKey,
           });
 
-      print("🚀 Request URL: $url");
+      print("Request URL: $url");
 
       final response = await http.get(url);
       if (response.statusCode != 200) {
