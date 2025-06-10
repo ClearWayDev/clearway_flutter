@@ -21,8 +21,20 @@ class TtsMessages {
     "You are now on the video call screen. "
     "Please wait while someone answers your call.";
 
+  static const signupScreen = 
+  "You are now on the signup screens. "
+  "To begin, please select your user type. "
+  "If you are visually impaired, choose the user option. "
+  "If you are here to help others, choose the volunteer option. "
+  "After that, you will need to enter a username, valid email address, and a secure password. "
+  "Finally, choose a location that is safe and familiar to you. This will help volunteers guide you better. "
+  "Please note, this form is complex and may require assistance. "
+  "If you need help, ask someone near you. "
+  "By signing up, you agree to our privacy policy and terms and conditions.";
+
   static const signinScreen = 
-    "You are now on the signin screen";
+    "You are now on the signin screen. "
+    "Please note, you may require assistance to signin or create an account. ";
 
   static const videoCallAnswerSuccess = 
     "Your call is connected";

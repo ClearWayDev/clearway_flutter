@@ -16,6 +16,8 @@ import 'package:clearway/utils/firebase_error.dart';
 import 'package:clearway/utils/top_snackbar.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:clearway/widgets/location_picker.dart';
+import 'package:clearway/services/imagedescription.dart';
+import 'package:clearway/constants/tts_messages.dart';
 
 class SignupFlowScreen extends ConsumerStatefulWidget {
   const SignupFlowScreen({super.key});
@@ -25,6 +27,16 @@ class SignupFlowScreen extends ConsumerStatefulWidget {
 }
 
 class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
+      @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+    // Describe the screen
+    ImageDescriptionService().speak(TtsMessages.signupScreen);
+  });
+  }
+
     final _formKey = GlobalKey<FormState>();
     final _authService = AuthService();
 
@@ -56,9 +68,12 @@ class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
     if (_currentStep > 0) {
       setState(() => _currentStep--);
     } else 
-    {            
-    Navigator.pop(context);
-    }
+    { 
+    ImageDescriptionService().stopSpeak();
+    Future.delayed(const Duration(milliseconds: 500), () {
+      Navigator.pop(context);
+    });
+  }
   }
 
  void _openLocationPicker() {
@@ -84,7 +99,10 @@ class _SignupFlowScreenState extends ConsumerState<SignupFlowScreen> {
 
 
   void _goToLogin() {
+     ImageDescriptionService().stopSpeak();
+        Future.delayed(const Duration(milliseconds: 500), () {
     Navigator.pushReplacementNamed(context, '/signin');
+    });
   }
   
 void _validateform() {
@@ -116,6 +134,7 @@ void _validateform() {
 
 
  Future<void> _register() async {
+       ImageDescriptionService().stopSpeak();
     setState(() => _isLoading = true);
 
   try {
@@ -150,10 +169,10 @@ Future<void> _dashboardAccess() async {
       final userState = ref.watch(userProvider);
   if (authState != null) {
       if(userState?.userType == UserType.blind){
-         Navigator.pushReplacementNamed(context, '/dashboard/blind/home');
-      } else {
-         Navigator.pushReplacementNamed(context, '/dashboard/guide/home');
-      } 
+       Navigator.pushNamedAndRemoveUntil(context, '/dashboard/blind/home', (route) => false);
+        } else {
+        Navigator.pushNamedAndRemoveUntil(context, '/dashboard/guide/home', (route) => false);
+      }
     } else {
       Navigator.pushReplacementNamed(context, '/welcome');
     }
@@ -265,7 +284,7 @@ Future<void> _dashboardAccess() async {
                   ),
                 ),
                 child: const Text(
-                  'Register As an Assistant',
+                  'Register As a Volunteer',
                   style: TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.w600,

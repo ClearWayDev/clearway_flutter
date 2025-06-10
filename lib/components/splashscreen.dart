@@ -70,10 +70,10 @@ Future<void> _initializeApp() async {
       final userState = ref.watch(userProvider);
     if (authState != null) {
       if(userState?.userType == UserType.blind){
-         Navigator.pushReplacementNamed(context, '/dashboard/blind/home');
-      } else {
-         Navigator.pushReplacementNamed(context, '/dashboard/guide/home');
-      } 
+         Navigator.pushNamedAndRemoveUntil(context, '/dashboard/blind/home', (route) => false);
+        } else {
+        Navigator.pushNamedAndRemoveUntil(context, '/dashboard/guide/home', (route) => false);
+      }
     } else {
       Navigator.pushReplacementNamed(context, '/welcome');
     }

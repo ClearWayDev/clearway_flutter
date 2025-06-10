@@ -60,11 +60,12 @@ class _SigninScreenState extends ConsumerState<SigninScreen> {
       if (!mounted) return;
       showTopSnackBar(context, 'Signed in successfully!', type: TopSnackBarType.success);
 
-      if(user.userType == UserType.blind){
-         Navigator.pushReplacementNamed(context, '/dashboard/blind/home');
-      } else {
-         Navigator.pushReplacementNamed(context, '/dashboard/guide/home');
-      } 
+     if (user.userType == UserType.blind) {
+        Navigator.pushNamedAndRemoveUntil(context, '/dashboard/blind/home', (route) => false);
+        } else {
+        Navigator.pushNamedAndRemoveUntil(context, '/dashboard/guide/home', (route) => false);
+      }
+
     } 
   } on FirebaseAuthException catch (e) {
     final message = getFirebaseAuthErrorMessage(e);
@@ -75,6 +76,13 @@ class _SigninScreenState extends ConsumerState<SigninScreen> {
     setState(() => _isLoading = false);
   }
 }
+
+void _goToSignup() {
+     ImageDescriptionService().stopSpeak();
+        Future.delayed(const Duration(milliseconds: 1000), () {
+    Navigator.pushNamed(context, '/signup');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -226,9 +234,7 @@ styledInputField(
             Padding(
               padding: const EdgeInsets.only(bottom: 20),
               child: TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/signup');
-                },
+                onPressed: _goToSignup,
                 child: Text.rich(
                   TextSpan(
                     text: "Don’t have an account? ",

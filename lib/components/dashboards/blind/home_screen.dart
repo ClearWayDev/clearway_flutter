@@ -3,6 +3,8 @@ import 'package:clearway/services/imagedescription.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clearway/constants/tts_messages.dart';
+import 'package:clearway/widgets/blind_popup.dart';
+import 'package:clearway/utils/tap_handler.dart';
 
 class BlindHomeScreen extends ConsumerStatefulWidget {
   const BlindHomeScreen({super.key});
@@ -15,14 +17,8 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
   final ImageDescriptionService _imageDescriptionService =
       ImageDescriptionService();
 
-  int _tapCount = 0;
-  DateTime? _lastTapTime;
-  static const Duration _tapTimeWindow = Duration(
-    milliseconds: 500,
-  ); // Time window for detecting multiple taps
-  static const Duration _processingDelay = Duration(
-    milliseconds: 1000,
-  ); // Delay before processing taps
+  bool _showAIPopup = false;
+  bool _showVideoCallPopup = false;
 
   @override
   void initState() {
@@ -33,54 +29,41 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
     });
   }
 
-  void _handleTap() async {
+  // Main screen tap handlers
+  void _handleDoubleTap() async {
     await _imageDescriptionService.stopSpeak();
-    final now = DateTime.now();
+    await Future.delayed(const Duration(milliseconds: 800));
+    await _imageDescriptionService.speak(
+      "AI assistance activated. To begin, please double tap the screen. "
+      "To exit this feature, tap three times.",
+    );
 
-    // Reset tap count if too much time has passed since last tap
-    if (_lastTapTime != null &&
-        now.difference(_lastTapTime!) > _tapTimeWindow) {
-      _tapCount = 0;
-    }
-
-    _tapCount++;
-    _lastTapTime = now;
-
-    // Cancel any existing timer and start a new one
-    Future.delayed(_processingDelay, () {
-      // Only process if this is still the latest tap sequence
-      if (_lastTapTime != null &&
-          now.difference(_lastTapTime!) <= _processingDelay) {
-        _processTaps();
-      }
+    setState(() {
+      _showAIPopup = true;
     });
   }
 
-  void _processTaps() {
-    switch (_tapCount) {
-      case 2:
-        _handleDoubleTap();
-        break;
-      case 3:
-        _handleTripleTap();
-        break;
-      default:
-        _handleInvalidTap();
-        break;
-    }
+  void _handleTripleTap() async {
+    await _imageDescriptionService.stopSpeak();
+    await Future.delayed(const Duration(milliseconds: 800));
+    await _imageDescriptionService.speak(
+      "Video call feature activated. Double tap the screen to place a call. "
+      "To exit this feature, tap three times.",
+    );
 
-    // Reset tap count after processing
-    _tapCount = 0;
-    _lastTapTime = null;
+    setState(() {
+      _showVideoCallPopup = true;
+    });
   }
 
-  void _handleDoubleTap() async {
-    await _imageDescriptionService.speak("AI assistance activated.");
-
+  // AI Popup handlers
+  void _handleAIDoubleTap() async {
     await _imageDescriptionService.stopSpeak();
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 1000));
 
-    await _imageDescriptionService.speak("Capturing surroundings");
+    await _imageDescriptionService.speak(
+      "Capturing. keep back camera facing forward.",
+    );
 
     final description = await _imageDescriptionService.captureDescribeSpeak();
 
@@ -89,56 +72,136 @@ class _BlindHomeScreenState extends ConsumerState<BlindHomeScreen> {
       await Future.delayed(const Duration(seconds: 1));
       _imageDescriptionService.speak("Capture stopped or failed. Try again.");
     } else {
-      // Already spoken in captureDescribeSpeak()
       print("AI Description: $description");
     }
   }
 
-  void _handleTripleTap() {
-    _imageDescriptionService.speak("Video call feature activated.");
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const BlindVideoCallScreen()),
+  void _handleAITripleTap() async {
+    await _imageDescriptionService.stopSpeak();
+    await Future.delayed(const Duration(milliseconds: 800));
+    _closeAIPopup();
+  }
+
+  void _closeAIPopup() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    setState(() {
+      _showAIPopup = false;
+    });
+    _imageDescriptionService.speak(
+      "AI feature closed. Please tap twice for AI assistance or three times for video call feature.",
     );
   }
 
-  void _handleInvalidTap() {
-    // Invalid tap count - provide guidance
+  // Video Call Popup handlers
+  void _handleVideoCallDoubleTap() async {
+    await _imageDescriptionService.stopSpeak();
+    await Future.delayed(const Duration(seconds: 1));
+    await _imageDescriptionService.speak("Starting video call...");
+  }
+
+  void _handleVideoCallTripleTap() async {
+    await _imageDescriptionService.stopSpeak();
+    await Future.delayed(const Duration(milliseconds: 800));
+    _closeVideoCallPopup();
+  }
+
+  void _closeVideoCallPopup() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    setState(() {
+      _showVideoCallPopup = false;
+    });
     _imageDescriptionService.speak(
-      "Invalid input detected. Please tap twice for AI assistance or three times for video call feature. Try again.",
+      "Video call feature closed. Please tap twice for AI assistance or three times for video call feature.",
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _handleTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        color: Colors.grey.shade300,
-        width: double.infinity,
-        height: double.infinity,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: _handleTap,
-                child: Image.asset(
-                  'assets/icon/tap_icon.png',
-                  width: 120,
-                  height: 120,
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Main screen
+          TapHandlerWidget(
+            onDoubleTap: _handleDoubleTap,
+            onTripleTap: _handleTripleTap,
+            child: Container(
+              color: Colors.grey.shade300,
+              width: double.infinity,
+              height: double.infinity,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/icon/tap_icon.png',
+                      width: 120,
+                      height: 120,
+                    ),
+                    const SizedBox(height: 36),
+                    const Text(
+                      'Tap twice for AI assistance\nTap three times for video call',
+                      style: TextStyle(color: Colors.black54, fontSize: 20),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 36),
-              const Text(
-                'Tap twice for AI assistance\nTap three times for video call',
-                style: TextStyle(color: Colors.black54, fontSize: 20),
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
-        ),
+
+          // AI Popup
+          if (_showAIPopup)
+            BlindPopupWidget(
+              title: "AI Assistant",
+              subtitle: "Choose your AI action",
+              onDoubleTap: _handleAIDoubleTap,
+              onTripleTap: _handleAITripleTap,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.camera_alt, size: 60, color: Colors.blue.shade600),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "AI Vision Ready",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Video Call Popup
+          if (_showVideoCallPopup)
+            BlindPopupWidget(
+              title: "Video Call",
+              subtitle: "Choose your call option",
+              onDoubleTap: _handleVideoCallDoubleTap,
+              onTripleTap: _handleVideoCallTripleTap,
+              backgroundColor: Colors.green.shade50,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.video_call,
+                    size: 60,
+                    color: Colors.green.shade600,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Call System Ready",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
