@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:clearway/services/guidanceservice.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart'; 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image/image.dart' as img;
@@ -103,9 +103,8 @@ class ImageDescriptionService {
             "- Are there any objects, people, vehicles, or roadblocks ahead?\n"
             "- Describe the structure of the path (e.g., narrow sidewalk, open street, stairs, slope).\n"
             "- Mention if the road or area ahead curves, slopes, ends, or has intersections nearby.\n\n"
-            "Provide the description in a short and helpful way. Prioritize safety and direction awareness.",
+            "**Provide the description as a single short sentence with only the most necessary information. Avoid long or detailed responses. Prioritize safety and directional awareness.**",
           ),
-
           DataPart('image/jpeg', imageBytes),
         ]),
       ]);
@@ -176,9 +175,63 @@ class ImageDescriptionService {
     }
   }
 
+  // Future<String?> captureDescribeSpeak() async {
+  //   if (_isLooping) {
+  //     _stopRequested = true;
+  //     return null;
+  //   }
+
+  //   _isLooping = true;
+  //   _stopRequested = false;
+  //   String? lastDescription;
+
+  //   while (!_stopRequested) {
+  //     final photo = await autoCaptureImage();
+  //     if (photo == null) break;
+
+  //     final compressedBytes = await compressImage(photo);
+  //     final imgDesc = await describeImageOnly(compressedBytes);
+
+  //     final guidanceService = GuidanceService();
+  //     final destination = await fetchSavedLocationAndGetGuidance();
+
+  //     if (destination == "User not logged in.") {
+  //       print("No destination available.");
+  //       return "No destination found";
+  //     }
+
+  //     final directionsRaw = await guidanceService.getGuidance(destination);
+  //     final firstDir = await getFirstDirection(directionsRaw);
+
+  //     final combined = "$imgDesc. $firstDir";
+  //     await speak(combined);
+  //     lastDescription = combined;
+
+  //     if (_stopRequested) break;
+
+  //     print("Waiting 10 seconds...");
+  //     for (int i = 0; i < 10; i++) {
+  //       if (_stopRequested) break;
+  //       await Future.delayed(Duration(seconds: 1));
+  //     }
+  //   }
+
+  //   _isLooping = false;
+  //   _stopRequested = false;
+  //   await _cameraController?.dispose();
+  //   _cameraController = null;
+
+  //   print("Loop finished.");
+  //   return lastDescription;
+  // }
   Future<String?> captureDescribeSpeak() async {
+    // If already looping, request stop and wait for it to finish
     if (_isLooping) {
+      print("Stop requested on re-call.");
       _stopRequested = true;
+      await stopSpeak(); // Immediately stop speech
+      await _cameraController?.dispose(); // Dispose current camera session
+      _cameraController = null;
       return null;
     }
 
@@ -186,41 +239,50 @@ class ImageDescriptionService {
     _stopRequested = false;
     String? lastDescription;
 
-    while (!_stopRequested) {
-      final photo = await autoCaptureImage();
-      if (photo == null) break;
+    try {
+      while (!_stopRequested) {
+        final photo = await autoCaptureImage();
+        if (_stopRequested || photo == null) break;
 
-      final compressedBytes = await compressImage(photo);
-      final imgDesc = await describeImageOnly(compressedBytes);
-
-      final guidanceService = GuidanceService();
-      final destination = await fetchSavedLocationAndGetGuidance();
-
-      if (destination == "User not logged in.") {
-        print("No destination available.");
-        return "No destination found";
-      }
-
-      final directionsRaw = await guidanceService.getGuidance(destination);
-      final firstDir = await getFirstDirection(directionsRaw);
-
-      final combined = "$imgDesc. $firstDir";
-      await speak(combined);
-      lastDescription = combined;
-
-      if (_stopRequested) break;
-
-      print("Waiting 10 seconds...");
-      for (int i = 0; i < 10; i++) {
+        final compressedBytes = await compressImage(photo);
         if (_stopRequested) break;
-        await Future.delayed(Duration(seconds: 1));
-      }
-    }
 
-    _isLooping = false;
-    _stopRequested = false;
-    await _cameraController?.dispose();
-    _cameraController = null;
+        final imgDesc = await describeImageOnly(compressedBytes);
+        if (_stopRequested) break;
+
+        final guidanceService = GuidanceService();
+        final destination = await fetchSavedLocationAndGetGuidance();
+        if (_stopRequested || destination == "User not logged in.") break;
+
+        final directionsRaw = await guidanceService.getGuidance(destination);
+        if (_stopRequested) break;
+
+        final firstDir = await getFirstDirection(directionsRaw);
+        if (_stopRequested) break;
+
+        final combined = "$imgDesc. $firstDir";
+
+        if (_stopRequested) break;
+
+        await speak(combined);
+        lastDescription = combined;
+
+        // Wait loop that can be interrupted
+        for (int i = 0; i < 10; i++) {
+          if (_stopRequested) break;
+          await Future.delayed(Duration(seconds: 1));
+        }
+      }
+    } catch (e) {
+      print("Error in captureDescribeSpeak loop: $e");
+    } finally {
+      print("Cleaning up...");
+      _isLooping = false;
+      _stopRequested = false;
+      await stopSpeak();
+      await _cameraController?.dispose();
+      _cameraController = null;
+    }
 
     print("Loop finished.");
     return lastDescription;
