@@ -1,5 +1,9 @@
+import 'dart:convert';
+
+import 'package:clearway/components/triggercall.dart';
 import 'package:clearway/models/user.dart';
 import 'package:clearway/providers/user_state.dart';
+import 'package:clearway/services/firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'websocket.dart'; // Import the WebSocketService
@@ -11,12 +15,16 @@ class WebRTCService {
   late MediaStream _localStream;
   final WebSocketService _webSocketService;
   final container = ProviderContainer();
+  final FirestoreService _firestoreService = FirestoreService();
+  var virginOffer = true;
+  final String uid;
+  final bool isBlind;
+  final List<RTCIceCandidate> _pendingCandidates = [];
 
-  WebRTCService(this._webSocketService);
+  WebRTCService(this._webSocketService, this.uid, this.isBlind);
 
   // Initialize the renderers, peer connection, and WebSocket
   Future<void> initialize() async {
-    final userInfo = container.read(userProvider);
     _localRenderer = RTCVideoRenderer();
     _remoteRenderer = RTCVideoRenderer();
     await _localRenderer.initialize();
@@ -27,13 +35,11 @@ class WebRTCService {
 
   // Get media stream (camera and microphone)
   Future<MediaStream> _getUserMedia() async {
-    final needVideo =
-        container.read(userProvider)!.userType == UserType.volunteer
-            ? false
-            : {'facingMode': 'environment'};
+    final needVideo = !isBlind ? false : {'facingMode': 'environment'};
 
     final mediaConstraints = {'audio': true, 'video': needVideo};
     _localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+
     return _localStream;
   }
 
@@ -71,45 +77,89 @@ class WebRTCService {
 
   // Create an offer to start communication
   Future<void> createOffer() async {
-    RTCSessionDescription offer = await _peerConnection.createOffer();
-    await _peerConnection.setLocalDescription(offer);
+    if (isBlind) {
+      {
+        RTCSessionDescription offer = await _peerConnection.createOffer();
+        await _peerConnection.setLocalDescription(offer);
 
-    // Send the offer to the WebSocket server
-    _webSocketService.sendMessage('offer', {
-      'sdp': offer.sdp,
-      'type': offer.type,
-    });
+        // Send the offer to the WebSocket server
+        _webSocketService.sendMessage('offer', {
+          'sdp': offer.sdp,
+          'type': offer.type,
+          'userType': "blind",
+          'uid': uid,
+        });
+      }
+    }
   }
 
   // Set remote description
   Future<void> setRemoteDescription(RTCSessionDescription description) async {
     await _peerConnection.setRemoteDescription(description);
+    // Add any queued ICE candidates now that remote description is set
+    for (final candidate in _pendingCandidates) {
+      await _peerConnection.addCandidate(candidate);
+    }
+    _pendingCandidates.clear();
   }
 
   // Add ICE candidate to the peer connection
   Future<void> addIceCandidate(RTCIceCandidate candidate) async {
+    if (_peerConnection.signalingState ==
+        RTCSignalingState.RTCSignalingStateClosed) {
+      print('Cannot add ICE candidate: PeerConnection is closed.');
+      return;
+    }
+    // If remote description is not set, queue the candidate
+    final remoteDescription = await _peerConnection.getRemoteDescription();
+    if (remoteDescription == null) {
+      _pendingCandidates.add(candidate);
+      print('Queued ICE candidate because remoteDescription is null');
+      return;
+    }
     await _peerConnection.addCandidate(candidate);
   }
 
   // Set up WebSocket listeners for signaling
   void _setupWebSocketListeners() {
     _webSocketService.socket.on('offer', (data) async {
-      print('Received offer: $data');
-      final description = RTCSessionDescription(data['sdp'], data['type']);
-      await setRemoteDescription(description);
+      String uid = await _firestoreService.getCurrentUserID() ?? '00';
+      bool isBlind = await _firestoreService.isUserBlind(uid);
+      if (!isBlind) {
+        print('Received offer: $data');
 
-      // Create an answer in response to the offer
-      RTCSessionDescription answer = await _peerConnection.createAnswer();
-      await _peerConnection.setLocalDescription(answer);
+        if (!virginOffer) return;
+        virginOffer = false;
+        TriggerCall.handleIncomingCall(uid, "${data['uid']}");
+        final description = RTCSessionDescription(data['sdp'], data['type']);
+        await setRemoteDescription(description);
 
-      // Send the answer back to the WebSocket server
-      _webSocketService.sendMessage('answer', {
-        'sdp': answer.sdp,
-        'type': answer.type,
-      });
+        // Create an answer in response to the offer
+        RTCSessionDescription answer = await _peerConnection.createAnswer();
+        await _peerConnection.setLocalDescription(answer);
+
+        // Send the answer back to the WebSocket server
+        _webSocketService.sendMessage('answer', {
+          'sdp': answer.sdp,
+          'type': answer.type,
+        });
+        /* } 
+        else {
+          virginOffer = true;
+        }
+        */
+      }
     });
 
     _webSocketService.socket.on('answer', (data) async {
+      String uid = await _firestoreService.getCurrentUserID() ?? '00';
+      bool isBlind = await _firestoreService.isUserBlind(uid);
+      if (!isBlind) {
+        return;
+      }
+      // Handle the answer received from the volunteer
+      // This is the answer to the offer we sent earlier
+      if (data['userType'] != "blind") return; // Ignore if not for blind user
       print('Received answer: $data');
       final description = RTCSessionDescription(data['sdp'], data['type']);
       await setRemoteDescription(description);
@@ -133,10 +183,12 @@ class WebRTCService {
 
   // Dispose the resources
   void disconnect() async {
+    // _localStream.getTracks().forEach((track) => track.stop());
     await _localStream.dispose();
     await _peerConnection.close();
     _localRenderer.dispose();
     _remoteRenderer.dispose();
+    virginOffer = true; // Reset for future calls
   }
 
   bool isConnectionEstablished() {

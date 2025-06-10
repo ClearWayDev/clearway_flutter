@@ -20,6 +20,20 @@ class FirestoreService {
     }
   }
 
+  Future<bool> isUserBlind(String uid) async {
+    try {
+      DocumentSnapshot doc = await _db.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return doc['isBlind'];
+      } else {
+        return false; // User does not exist
+      }
+    } catch (e) {
+      debugPrint("Error checking if user is blind: $e");
+      return false;
+    }
+  }
+
   Future<String?> getFcmTokenByUid(String uid) async {
     try {
       DocumentSnapshot doc = await _db.collection('fcmtokens').doc(uid).get();

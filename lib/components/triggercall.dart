@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:clearway/services/websocket.dart';
 import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
@@ -7,6 +8,7 @@ class TriggerCall {
   static final websocket = WebSocketService.getInstance();
 
   static void handleIncomingCall(String myUId, String destUId) async {
+    final completer = Completer<bool>();
     await FlutterCallkitIncoming.showCallkitIncoming(
       CallKitParams(
         id: Uuid().v4(),
@@ -39,23 +41,24 @@ class TriggerCall {
       ),
     );
 
-    FlutterCallkitIncoming.onEvent.listen((CallEvent? event) {
+    late StreamSubscription sub;
+    sub = FlutterCallkitIncoming.onEvent.listen((CallEvent? event) {
       if (event == null) return;
       switch (event.event) {
-        case Event.actionCallIncoming:
-          // TODO: received an incoming call
-          break;
-        case Event.actionCallStart:
-          // TODO: started an outgoing call
-          // TODO: show screen calling in Flutter
-          break;
         case Event.actionCallAccept:
           _onCallAccepted(myUId, destUId);
+          if (!completer.isCompleted) completer.complete(true);
+          sub.cancel();
           break;
         case Event.actionCallDecline:
           _onCallDeclined(myUId, destUId);
+          if (!completer.isCompleted) completer.complete(false);
+          sub.cancel();
           break;
+        case Event.actionCallIncoming:
+        case Event.actionCallStart:
         default:
+          break;
       }
     });
   }

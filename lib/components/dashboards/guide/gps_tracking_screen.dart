@@ -1,4 +1,5 @@
 import 'package:clearway/components/videoCallWidget.dart';
+import 'package:clearway/services/firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
@@ -13,10 +14,14 @@ class GpsTrackingScreen extends ConsumerStatefulWidget {
 }
 
 class _GpsTrackingScreenState extends ConsumerState<GpsTrackingScreen> {
-  bool _isMapVisible = false;
+  final FirestoreService _firestoreService = FirestoreService();
 
+  bool _isMapVisible = false;
   LatLng _currentLocation = LatLng(6.9271, 79.8612);
   final LatLng _destinationLocation = LatLng(6.9319, 79.8478);
+
+  String _uid = '00';
+  bool _isBlind = false;
 
   void _toggleMap() {
     setState(() {
@@ -34,8 +39,22 @@ class _GpsTrackingScreenState extends ConsumerState<GpsTrackingScreen> {
   void initState() {
     super.initState();
     Future.delayed(Duration(seconds: 3), () {
-      _updateCurrentLocation(LatLng(6.9285, 79.8570));
+      if (mounted) {
+        _updateCurrentLocation(LatLng(6.9285, 79.8570));
+      }
     });
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    String uid = await _firestoreService.getCurrentUserID() ?? '00';
+    bool isBlind = await _firestoreService.isUserBlind(uid);
+    if (mounted) {
+      setState(() {
+        _uid = uid;
+        _isBlind = isBlind;
+      });
+    }
   }
 
   @override
@@ -53,30 +72,7 @@ class _GpsTrackingScreenState extends ConsumerState<GpsTrackingScreen> {
       ),
       body: Stack(
         children: [
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.gps_fixed, size: 80, color: Colors.blue),
-                const SizedBox(height: 20),
-                const Text(
-                  'GPS Tracking Active',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'FCM TOKEN : $token',
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-          if (_isMapVisible)
-            DraggableMapPopup(
-              currentLocation: _currentLocation,
-              destinationLocation: _destinationLocation,
-              onClose: _toggleMap,
-            ),
+          Center(child: Column(children: [Expanded(child: VideoCallWidget())])),
         ],
       ),
     );
